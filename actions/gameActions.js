@@ -1,0 +1,114 @@
+import { PRIVACY, GAME_STATES } from "../constants/helperConstants";
+import { format } from "date-fns";
+
+export const deleteGame = ({ firestore }, id) => {
+  return async (dispatch) => {
+    try {
+      var batch = firestore.batch();
+
+      var gameRef = firestore.collection("games").doc(id);
+      var groupGameQuery = firestore
+        .collection("groups_games")
+        .where("gameId", "==", id);
+      var inviteQuery = firestore
+        .collection("game_invite")
+        .where("gameId", "==", id);
+      var inviteSnap = await inviteQuery.get();
+      var groupGameSnap = await groupGameQuery.get();
+      inviteSnap.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      groupGameSnap.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      batch.delete(gameRef);
+
+      await batch.commit();
+
+      return;
+    } catch (error) {
+      console.log("Error deleting", error);
+      return error;
+    }
+  };
+};
+
+export const createGame = ({ firestore }, group, groupId) => {
+  return async (dispatch, getState) => {
+    console.log("crateGame Action");
+
+    try {
+      let newGame = await firestore.collection("games").add({
+        creationDate: Date.now(),
+        groupId: groupId,
+        gameSettings: {
+          dealer: "None",
+          title: `${group.name}'s Game`,
+          drinksAvailable: [],
+          drinksProvided: [],
+          game: "NLH",
+          smoking: "None",
+          stakes: "1-2",
+          straddles: [],
+          venue: "House",
+          venueOpenTime: format(Date.now(), "PPPPp"),
+        },
+        seating: [
+          { taken: false, seatName: "Seat 1" },
+          { taken: false, seatName: "Seat 2" },
+          { taken: false, seatName: "Seat 3" },
+          { taken: false, seatName: "Seat 4" },
+          { taken: false, seatName: "Seat 5" },
+          { taken: false, seatName: "Seat 6" },
+          { taken: false, seatName: "Seat 7" },
+          { taken: false, seatName: "Seat 8" },
+          { taken: false, seatName: "Seat 9" },
+        ],
+        dispatched: false,
+        game_set: false,
+        gameState:
+          group.privacy === PRIVACY.LOCAL
+            ? GAME_STATES.OPEN_REGISTRATION
+            : GAME_STATES.PRIVATE_REGISTRATION,
+        groupName: group.name,
+        groupPhotoURL: group.photoURL,
+        privacy: group.privacy,
+        hostUid: group.hostUid,
+        hostedBy: group.hostedBy,
+        area: group.area,
+        hostPhotoURL: group.hostPhotoURL || "/assets/user.png",
+        members: {
+          [group.hostUid]: {
+            joinDate: Date.now(),
+            photoURL: group.hostPhotoUR || "/assets/user.png",
+            displayName: group.hostedBy,
+            host: true,
+          },
+          ...group.members,
+        },
+      });
+
+      await firestore
+        .collection("groups_games")
+        .doc(`${group.id}_${newGame.id}`)
+        .set({
+          creationDate: Date.now(),
+          gameId: newGame.id,
+          groupId: group.id,
+          dispatched: false,
+          game_set: false,
+          gameName: `${group.name}'s Game`,
+          gameState:
+            group.privacy === PRIVACY.LOCAL
+              ? GAME_STATES.OPEN_REGISTRATION
+              : GAME_STATES.PRIVATE_REGISTRATION,
+          privacy: group.privacy,
+        });
+
+      return newGame;
+    } catch (error) {
+      console.log({ error });
+    }
+  };
+};

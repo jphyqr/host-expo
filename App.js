@@ -1,19 +1,301 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import "react-native-gesture-handler";
+import React, { useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  Vibration,
+  Button,
+} from "react-native";
 
-export default function App() {
+import { Provider } from "react-redux";
+import { createFirestoreInstance } from "redux-firestore";
+//import store from "./store";
+import firebase from "./firebase";
+import { TabNavigator, StackNavigator } from "react-navigation";
+import { ReactReduxFirebaseProvider } from "react-redux-firebase";
+import WelcomeScreen from "./screens/WelcomeScreen";
+
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem,
+} from "@react-navigation/drawer";
+import FeedScreen from "./screens/FeedScreen";
+import AreaScreen from "./screens/AreaScreen";
+import RequestCodeScreen from "./screens/RequestCodeScreen";
+import EnterCodeScreen from "./screens/EnterCodeScreen";
+import { useSelector } from "react-redux/lib/hooks/useSelector";
+import ProfileScreen from "./screens/ProfileScreen";
+import GameScreen from "./screens/GameScreen";
+import GroupScreen from "./screens/GroupScreen";
+import configureStore from "./store";
+import { PersistGate } from "redux-persist/integration/react";
+import { registerForPushNotifications } from "./services/push_notifications";
+import { Notifications } from "expo";
+import * as Permissions from "expo-permissions";
+import Constants from "expo-constants";
+
+import { Alert } from "react-native";
+import EmailPasswordScreen from "./screens/EmailPasswordScreen";
+import GroupAdminScreen from "./screens/GroupAdminScreen";
+import GroupMemberScreen from "./screens/GroupMemberScreen";
+import { useDispatch } from "react-redux/lib/hooks/useDispatch";
+import CreateGameScreen from "./screens/CreateGame/CreateGameScreen";
+import InviteMembersScreen from "./screens/CreateGame/InviteMembersScreen";
+import { SET_GAME, SET_GROUP } from "./constants/reducerConstants";
+const { store, persistor } = configureStore();
+
+const App = () => {
+  const rrfConfig = {
+    userProfile: "users",
+    useFirestoreForProfile: true, // Firestore for Profile instead of Realtime DB
+  };
+
+  const rrfProps = {
+    firebase,
+    config: rrfConfig,
+    dispatch: store.dispatch,
+    createFirestoreInstance, // <- needed if using firestore
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-    </View>
+    <Provider store={store}>
+      <ReactReduxFirebaseProvider {...rrfProps}>
+        <PersistGate
+          persistor={persistor}
+          loading={<ActivityIndicator />}
+          onBeforeLift={() => console.log("lifted")}
+        >
+          <WrappedApp />
+        </PersistGate>
+      </ReactReduxFirebaseProvider>
+    </Provider>
+  );
+};
+
+function WrappedApp({ navigation }) {
+  const Stack = createStackNavigator();
+  const Tab = createBottomTabNavigator();
+  const firestore = firebase.firestore();
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const checkPermissions = async () => {
+      await registerForPushNotifications();
+      Notifications.addListener(async (notification) => {
+        const { data, origin } = notification;
+        const { routeId, action } = data || {};
+
+        switch (action) {
+          case "GAME":
+            {
+              let gameDoc = await firestore
+                .collection("games")
+                .doc(routeId)
+                .get();
+              let game = { id: gameDoc.id, ...gameDoc.data() };
+              dispatch({ type: SET_GAME, payload: game });
+              navigation.navigate("GameScreen");
+            }
+            break;
+          case "GROUP_USER": {
+            dispatch({ type: SET_GROUP, payload: routeId });
+            navigation.navigate("GroupScreen");
+          }
+          case "GROUP":
+            {
+              dispatch({ type: SET_GROUP, payload: routeId });
+              navigation.navigate("GroupAdminScreen");
+            }
+            break;
+          default:
+        }
+      });
+    };
+
+    checkPermissions();
+  }, []);
+
+  const registerForPushNotificationsAsync = async () => {
+    if (Constants.isDevice) {
+      const { status: existingStatus } = await Permissions.askAsync(
+        Permissions.NOTIFICATIONS
+      );
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Permissions.askAsync(
+          Permissions.NOTIFICATIONS
+        );
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        alert("Failed to get push token for push notification!");
+        return;
+      }
+      token = await Notifications.getExpoPushTokenAsync();
+    } else {
+      alert("Must use physical device for Push Notifications");
+    }
+
+    if (Platform.OS === "android") {
+      Notifications.createChannelAndroidAsync("default", {
+        name: "default",
+        sound: true,
+        priority: "max",
+        vibrate: [0, 250, 250, 250],
+      });
+    }
+  };
+
+  const CreateGame = () => {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen name="CreateGameScreen" component={CreateGameScreen} />
+        <Stack.Screen
+          name="InviteMembersScreen"
+          component={InviteMembersScreen}
+        />
+      </Stack.Navigator>
+    );
+  };
+
+  const GroupAdmin = () => {
+    return <Stack.Navigator></Stack.Navigator>;
+  };
+
+  const Feed = () => {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen name="FeedScreen" component={FeedScreen} />
+        <Stack.Screen name="GameScreen" component={GameScreen} />
+        <Stack.Screen name="GroupScreen" component={GroupScreen} />
+        <Stack.Screen name="GroupAdminScreen" component={GroupAdminScreen} />
+        <Stack.Screen name="CreateGameScreen" component={CreateGameScreen} />
+        <Stack.Screen
+          name="InviteMembersScreen"
+          component={InviteMembersScreen}
+        />
+
+        <Stack.Screen name="GroupMemberScreen" component={GroupMemberScreen} />
+      </Stack.Navigator>
+    );
+  };
+
+  const CreateGroup = () => {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen name="CreateGroupScreen" component={FeedScreen} />
+        <Stack.Screen name="GameScreen" component={GameScreen} />
+      </Stack.Navigator>
+    );
+  };
+
+  const MainClosed = () => {
+    return (
+      <Tab.Navigator>
+        <Tab.Screen name="Feed" component={Feed} />
+        <Tab.Screen name="CreateGroup" component={CreateGroup} />
+
+        <Tab.Screen name="AreaScreen" component={AreaScreen} />
+
+        <Tab.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ title: "Profile" }}
+        />
+      </Tab.Navigator>
+    );
+  };
+
+  const Drawer = createDrawerNavigator();
+
+  function CustomDrawerContent(props) {
+    return (
+      <DrawerContentScrollView {...props}>
+        <DrawerItemList {...props} />
+        <DrawerItem
+          label="Help"
+          onPress={() => Linking.openURL("https://privatehost.ca/help")}
+        />
+        <DrawerItem
+          label="Sign Out"
+          onPress={() => {
+            firebase.auth().signOut();
+          }}
+        />
+      </DrawerContentScrollView>
+    );
+  }
+
+  const Main = () => {
+    return (
+      <Drawer.Navigator
+        initialRouteName="Main"
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
+      >
+        <Drawer.Screen name="Main" component={MainClosed} />
+      </Drawer.Navigator>
+    );
+  };
+
+  const Auth = () => {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen name="RequestAccess" component={RequestCodeScreen} />
+        <Stack.Screen name="EmailPassword" component={EmailPasswordScreen} />
+
+        <Stack.Screen name="EnterCode" component={EnterCodeScreen} />
+      </Stack.Navigator>
+    );
+  };
+
+  // const auth = useSelector((state) => state.firebase.auth);
+
+  // useEffect(() => {
+  //   if (auth?.isLoaded) {
+  //     if (!auth?.isEmpty) {
+  //       navigation.navigate("Main");
+  //     }s
+  //   }
+  // }, [auth]);
+
+  return (
+    <NavigationContainer>
+      <Tab.Navigator>
+        <Tab.Screen
+          name="Welcome"
+          component={WelcomeScreen}
+          options={{
+            tabBarVisible: false,
+          }}
+        />
+        <Tab.Screen
+          name="Auth"
+          component={Auth}
+          options={{ title: "Request Access", tabBarVisible: false }}
+        />
+        <Tab.Screen
+          name="Main"
+          component={Main}
+          options={{ title: "Private Host", tabBarVisible: false }}
+        />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
+
+export default App;
