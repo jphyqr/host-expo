@@ -21,7 +21,7 @@ export const h3Style = {
 export const h4Style = {
   fontSize: 16,
   color: "black",
-  marginTop: 15,
+  marginTop: 5,
   marginBottom: 5,
 };
 
@@ -29,8 +29,15 @@ export const h5Style = {
   fontSize: 16,
   color: "blue",
   fontWeight: "600",
-  marginTop: 10,
-  marginBottom: 10,
+  marginTop: 5,
+  marginBottom: 5,
+};
+
+export const errorStyle = {
+  color: "red",
+};
+export const selectedAvatar = {
+  border: "3px solid red",
 };
 
 export const h6Style = {
@@ -47,6 +54,13 @@ export const h7Style = {
   fontStyle: "italic",
   marginTop: 0,
   marginBottom: 2,
+};
+
+export const vs30 = {
+  minHeight: 30,
+};
+export const vs10 = {
+  height: 10,
 };
 
 export const spacedRow = {

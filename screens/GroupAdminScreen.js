@@ -1,14 +1,30 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { View, Text, ActivityIndicator, Button, Alert } from "react-native";
+import { View, Text, ActivityIndicator, Alert } from "react-native";
 import { useSelector } from "react-redux";
 import firebase from "../firebase";
 import _ from "lodash";
-import { ListItem, ButtonGroup, Icon, Card } from "react-native-elements";
+import {
+  ListItem,
+  ButtonGroup,
+  Button,
+  Icon,
+  Card,
+} from "react-native-elements";
 import { useDispatch } from "react-redux/lib/hooks/useDispatch";
 import { createGame } from "../actions/gameActions";
 import { useFirestoreConnect } from "react-redux-firebase";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
-import { h2Style } from "../styles/styles";
+import {
+  h2Style,
+  h7Style,
+  vs30,
+  h3Style,
+  vs10,
+  h4Style,
+  h5Style,
+  spacedRow,
+} from "../styles/styles";
+import { SET_GAME } from "../constants/reducerConstants";
 const GroupAdminScreen = ({ navigation }) => {
   const groupId = useSelector((state) => state.group || {});
   const [_group, setGroup] = useState({});
@@ -23,10 +39,9 @@ const GroupAdminScreen = ({ navigation }) => {
       let createdGame = await dispatch(
         createGame({ firestore }, _group, groupId)
       );
+      console.log({ createdGame });
+      navigation.navigate("CreateGameScreen");
       loading(false);
-      navigation.navigate("CreateGameScreen", {
-        id: createdGame.id,
-      });
     } catch (error) {
       console.log({ error });
       // Alert.alert("Error Creating Game", error);
@@ -36,7 +51,7 @@ const GroupAdminScreen = ({ navigation }) => {
 
   const groupsGamesQuery = useMemo(
     () => ({
-      collection: "groups_games",
+      collection: "games",
       where: ["groupId", "==", groupId],
       storeAs: "groupsGames",
     }),
@@ -67,7 +82,7 @@ const GroupAdminScreen = ({ navigation }) => {
     auth.isLoaded && !auth.isEmpty && getGroupModel();
   }, [groupId, auth]);
 
-  if (_.isEmpty(_group) || _loading) return <ActivityIndicator />;
+  if (_.isEmpty(_group)) return <ActivityIndicator />;
 
   const AcceptButton = () => (
     <Icon reverse name="ios-american-football" type="ionicon" color="#517fa4" />
@@ -75,9 +90,25 @@ const GroupAdminScreen = ({ navigation }) => {
   const pendingButtons = [{ element: AcceptButton }, { element: AcceptButton }];
 
   return (
-    <View>
-      <Text>{_group.name}</Text>
-      {!_.isEmpty(_group.pending) && <Text>Pending</Text>}
+    <ScrollView>
+      <View style={spacedRow}>
+        <Text style={h2Style}>{_group.name}</Text>
+        <Button
+          loading={_loading}
+          type="solid"
+          onPress={handleCreateGameClick}
+          title="CreateGame"
+          icon={{
+            name: "add",
+            size: 15,
+            color: "white",
+          }}
+        />
+      </View>
+
+      <View style={vs30} />
+      {!_.isEmpty(_group.pending) && <Text style={h5Style}>Pending</Text>}
+
       {Object.keys(_group?.pending).map((g, i) => {
         return (
           <ListItem
@@ -96,8 +127,8 @@ const GroupAdminScreen = ({ navigation }) => {
           />
         );
       })}
-
-      {!_.isEmpty(_group.members) && <Text>Members</Text>}
+      <View style={vs10} />
+      {!_.isEmpty(_group.members) && <Text syle={h4Style}>Members</Text>}
       {Object.keys(_group?.members).map((g, i) => {
         return (
           <ListItem
@@ -114,28 +145,57 @@ const GroupAdminScreen = ({ navigation }) => {
           />
         );
       })}
-
-      <Text style={h2Style}>Groups Games</Text>
+      <Button
+        onPress={() => navigation.navigate("AddMemberScreen")}
+        type="outline"
+        title="Add Member by Phone"
+      />
+      <View style={vs30} />
+      <Text style={h3Style}>Groups Games</Text>
 
       <ScrollView horizontal>
         {groupsGames?.map((g, i) => {
           return (
             <TouchableOpacity
               key={i}
-              onPress={() =>
+              onPress={() => {
+                dispatch({
+                  type: SET_GAME,
+                  payload: g,
+                });
                 navigation.navigate("CreateGameScreen", {
-                  id: g.gameId,
-                })
-              }
+                  id: g.id,
+                });
+              }}
             >
-              <Card key={i} title={g.gameName} />
+              <Card key={i} title={g.gameName}>
+                <Text>{g.gameState}</Text>
+                {g.seating?.map((p, i) => {
+                  return (
+                    <Text style={h7Style} key={i}>
+                      Seat {i + 1} {p.displayName}
+                    </Text>
+                  );
+                })}
+              </Card>
             </TouchableOpacity>
           );
         })}
       </ScrollView>
-
-      <Button onPress={handleCreateGameClick} title="CreateGame" />
-    </View>
+      <View style={vs30} />
+      <Button
+        loading={_loading}
+        type="solid"
+        onPress={handleCreateGameClick}
+        title="CreateGame"
+        icon={{
+          name: "add",
+          size: 15,
+          color: "white",
+        }}
+      />
+      <View style={vs30} />
+    </ScrollView>
   );
 };
 

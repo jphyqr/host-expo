@@ -4,6 +4,8 @@ import {
   SET_GROUP_S,
   SET_GROUP,
   UPDATE_GAME_S,
+  CREATE_GAME,
+  DELETE_GAME,
 } from "../constants/reducerConstants";
 
 export const gameReducer = (state = {}, action) => {
@@ -30,6 +32,14 @@ export const gamesReducer = (state = [], action) => {
       }
 
       break;
+    case CREATE_GAME:
+      {
+        return [...state, Object.assign({}, action.payload)];
+      }
+      break;
+    case DELETE_GAME: {
+      return [...state.filter((game) => game.id !== action.payload.id)];
+    }
     default:
       return state;
   }

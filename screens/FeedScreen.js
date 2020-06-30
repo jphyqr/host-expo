@@ -207,6 +207,48 @@ const FeedScreen = ({ navigation }) => {
 
       <Text style={h2Style}>Live Games</Text>
       <ScrollView horizontal>
+        {_games
+          .filter(
+            (g) =>
+              g.gameState === GAME_STATES.GAME_RUNNING_FULL ||
+              g.gameState === GAME_STATES.GAME_RUNNING_OPEN
+          )
+          .map((item, i) => {
+            return (
+              <TouchableOpacity
+                key={i}
+                onPress={
+                  item.hostUid === auth.uid
+                    ? () =>
+                        navigation.navigate("InviteMembersScreen", {
+                          id: item.id,
+                        })
+                    : () => {
+                        dispatch({ type: SET_GAME, payload: item });
+                        navigation.navigate("GameScreen");
+                      }
+                }
+              >
+                <Card title={item.groupName}>
+                  {item.hostUid === auth.uid && (
+                    <Text style={h7Style}>Host</Text>
+                  )}
+
+                  {item.confirmedList?.map((u, i) => {
+                    return (
+                      <Text key={i} style={h6Style}>
+                        {u.displayName}
+                      </Text>
+                    );
+                  })}
+                </Card>
+              </TouchableOpacity>
+            );
+          })}
+      </ScrollView>
+
+      <Text style={h2Style}>Registering Games</Text>
+      <ScrollView horizontal>
         {_games.map((item, i) => {
           return (
             <TouchableOpacity
@@ -225,32 +267,6 @@ const FeedScreen = ({ navigation }) => {
             >
               <Card title={item.groupName}>
                 {item.hostUid === auth.uid && <Text style={h7Style}>Host</Text>}
-
-                {item.confirmedList?.map((u, i) => {
-                  return (
-                    <Text key={i} style={h6Style}>
-                      {u.displayName}
-                    </Text>
-                  );
-                })}
-              </Card>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      <Text style={h2Style}>Registering Games</Text>
-      <ScrollView horizontal>
-        {_games.map((item, i) => {
-          return (
-            <TouchableOpacity
-              key={i}
-              onPress={() => {
-                dispatch({ type: SET_GAME, payload: item });
-                navigation.navigate("GameScreen");
-              }}
-            >
-              <Card title={item.groupName}>
                 {item.confirmedList?.map((u, i) => {
                   return (
                     <Text key={i} style={h6Style}>

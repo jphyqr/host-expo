@@ -1,5 +1,10 @@
 import { PRIVACY, GAME_STATES } from "../constants/helperConstants";
 import { format } from "date-fns";
+import {
+  CREATE_GAME,
+  DELETE_GAME,
+  SET_GAME,
+} from "../constants/reducerConstants";
 
 export const deleteGame = ({ firestore }, id) => {
   return async (dispatch) => {
@@ -25,6 +30,7 @@ export const deleteGame = ({ firestore }, id) => {
       batch.delete(gameRef);
 
       await batch.commit();
+      dispatch({ type: DELETE_GAME, payload: { id: newGame.id, ...newGame } });
 
       return;
     } catch (error) {
@@ -39,7 +45,7 @@ export const createGame = ({ firestore }, group, groupId) => {
     console.log("crateGame Action");
 
     try {
-      let newGame = await firestore.collection("games").add({
+      let newGame = {
         creationDate: Date.now(),
         groupId: groupId,
         gameSettings: {
@@ -87,8 +93,10 @@ export const createGame = ({ firestore }, group, groupId) => {
           },
           ...group.members,
         },
-      });
+      };
+      let result = await firestore.collection("games").add(newGame);
 
+      newGame.id = result.id;
       await firestore
         .collection("groups_games")
         .doc(`${group.id}_${newGame.id}`)
@@ -105,6 +113,9 @@ export const createGame = ({ firestore }, group, groupId) => {
               : GAME_STATES.PRIVATE_REGISTRATION,
           privacy: group.privacy,
         });
+
+      dispatch({ type: SET_GAME, payload: newGame });
+      dispatch({ type: CREATE_GAME, payload: { id: newGame.id, ...newGame } });
 
       return newGame;
     } catch (error) {

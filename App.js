@@ -47,8 +47,10 @@ import GroupAdminScreen from "./screens/GroupAdminScreen";
 import GroupMemberScreen from "./screens/GroupMemberScreen";
 import { useDispatch } from "react-redux/lib/hooks/useDispatch";
 import CreateGameScreen from "./screens/CreateGame/CreateGameScreen";
+import ManagePlayerInGameScreen from "./screens/CreateGame/ManagePlayerInGameScreen";
 import InviteMembersScreen from "./screens/CreateGame/InviteMembersScreen";
 import { SET_GAME, SET_GROUP } from "./constants/reducerConstants";
+import AddMemberScreen from "./screens/AddMemberScreen";
 const { store, persistor } = configureStore();
 
 const App = () => {
@@ -175,10 +177,16 @@ function WrappedApp({ navigation }) {
         <Stack.Screen name="GameScreen" component={GameScreen} />
         <Stack.Screen name="GroupScreen" component={GroupScreen} />
         <Stack.Screen name="GroupAdminScreen" component={GroupAdminScreen} />
+        <Stack.Screen name="AddMemberScreen" component={AddMemberScreen} />
+
         <Stack.Screen name="CreateGameScreen" component={CreateGameScreen} />
         <Stack.Screen
           name="InviteMembersScreen"
           component={InviteMembersScreen}
+        />
+        <Stack.Screen
+          name="ManagePlayerInGameScreen"
+          component={ManagePlayerInGameScreen}
         />
 
         <Stack.Screen name="GroupMemberScreen" component={GroupMemberScreen} />

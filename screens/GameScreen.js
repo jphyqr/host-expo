@@ -132,7 +132,7 @@ const GameScreen = () => {
     await firestore.collection("games").doc(game.id).update({
       members: updatedMembers,
     });
-    let updatedConfirmedList = game.confirmedList || [];
+    let updatedConfirmedList = game?.confirmedList || [];
     if (status == "CONFIRMED") {
       if (updatedConfirmedList.filter((c) => c.id === auth.uid).length > 0) {
       } else {
@@ -222,7 +222,6 @@ const GameScreen = () => {
   };
 
   const renderSeatingButtons = () => {
-    console.log({ _seating });
     let buttons = ["button"];
     // _seating.map((seat, i) => {
     //   buttons.push({
@@ -315,7 +314,7 @@ const GameScreen = () => {
 
       <Text style={h2Style}>
         {" "}
-        {game.confirmedList.filter((l) => l.id === auth.uid).length > 0
+        {game?.confirmedList?.filter((l) => l.id === auth.uid).length > 0
           ? "You are confirmed"
           : `Select Your Seat to Confirm`}{" "}
       </Text>
