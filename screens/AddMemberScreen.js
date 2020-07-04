@@ -10,28 +10,30 @@ import {
   vs30,
   selectedAvatar,
   errorStyle,
+  spacedRow,
 } from "../styles/styles";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import _ from "lodash";
 import axios from "axios";
 import firebase from "../firebase";
 import { useFirestoreConnect } from "react-redux-firebase";
 import { ScrollView } from "react-native-gesture-handler";
+import { ADD_MEMBER_TO_GROUP } from "../constants/reducerConstants";
 const ROOT_URL = "https://us-central1-poker-cf130.cloudfunctions.net";
 
 const AddMemberScreen = ({ navigation }) => {
   const firestore = firebase.firestore();
-  const [_group, setGroup] = useState({});
+  const xAvatars = useSelector((state) => state.avatars.user || []);
   const [_loading, loading] = useState(false);
   const [_phone, setPhone] = useState("");
   const [_email, setEmail] = useState("");
-  const [_avatar, selectAvatar] = useState({});
+  const [_avatar, selectAvatar] = useState("");
   const [_password, setPassword] = useState("");
   const [_displayName, setDisplayName] = useState("");
-  const xGroupId = useSelector((state) => state.group || {});
+  const xGroup = useSelector((state) => state.group || {});
   const [_phoneError, setPhoneError] = useState(false);
   const [_phoneErrorMsg, setPhoneErrorMsg] = useState("");
-
+  const [_showAvatarPicker, avatarPicker] = useState(false);
   const [_emailError, setEmailError] = useState(false);
   const [_emailErrorMsg, setEmailErrorMsg] = useState("");
   const [_submitError, setSubmitError] = useState(false);
@@ -43,35 +45,10 @@ const AddMemberScreen = ({ navigation }) => {
   const [_passwordErrorMsg, setPasswordErrorMsg] = useState("");
 
   const [_includeEP, setIncludeEP] = useState(false);
-
-  const avatarQuery = useMemo(
-    () => ({
-      collection: "stock_avatars",
-      storeAs: "avatarSnap",
-    }),
-    [xGroupId]
-  );
-
-  useFirestoreConnect(avatarQuery);
-
-  const avatars = useSelector(
-    (state) => state.firestore.ordered.avatarSnap || []
-  );
-
+  const dispatch = useDispatch();
   useEffect(() => {
-    console.log("groupid", xGroupId);
-    const getGroupFromFirestore = async () => {
-      let group = await firestore.collection("groups").doc(xGroupId).get();
-
-      setGroup({ id: group.id, ...group.data() });
-    };
-
-    getGroupFromFirestore();
-  }, [xGroupId]);
-
-  useEffect(() => {
-    selectAvatar(avatars[0].url);
-  }, [avatars]);
+    selectAvatar(xAvatars?.[0]?.url || "");
+  }, [xAvatars]);
 
   const updateIfMatchesPhonePattern = async (value) => {
     console.log("UPDATEIFMATCHES", value);
@@ -190,15 +167,18 @@ const AddMemberScreen = ({ navigation }) => {
         }
       }
 
-      await axios.post(`${ROOT_URL}/createUser`, {
+      let { data } = await axios.post(`${ROOT_URL}/createUser`, {
         includeEP: _includeEP,
         email: _email,
         phone: `1${_phone}`,
-        id: xGroupId,
+        id: xGroup.id,
         displayName: _displayName,
         password: _password,
         photoURL: _avatar,
       });
+
+      const { data: newUser } = data;
+      dispatch({ type: ADD_MEMBER_TO_GROUP, payload: newUser });
 
       navigation.goBack();
 
@@ -211,11 +191,12 @@ const AddMemberScreen = ({ navigation }) => {
     }
   };
 
-  if (_.isEmpty(_group)) return <ActivityIndicator />;
-
+  if (_.isEmpty(xAvatars)) return <ActivityIndicator />;
   return (
     <ScrollView>
-      <Text style={h2Style}>{`Add a new member to ${_group.name}`}</Text>
+      <Text
+        style={h2Style}
+      >{`Add a new member to ${route.params.groupName}`}</Text>
 
       <Text style={h5Style}>Phone Number</Text>
       <Input
@@ -229,14 +210,60 @@ const AddMemberScreen = ({ navigation }) => {
         leftIcon={<Icon name="phone" size={24} color="black" />}
       />
 
-      <Text style={h5Style}>Display Name</Text>
-      <Input
-        placeholder="Big Al"
-        value={_displayName}
-        onChangeText={(p) => setDisplayName(p)}
-        errorStyle={{ color: "red" }}
-        errorMessage={_displayNameError ? _displayNameErrorMsg : ""}
-      />
+      <View style={spacedRow}>
+        <View>
+          <Text style={h5Style}>Display Name</Text>
+          <Input
+            placeholder="Big Al"
+            value={_displayName}
+            onChangeText={(p) => setDisplayName(p)}
+            errorStyle={{ color: "red" }}
+            errorMessage={_displayNameError ? _displayNameErrorMsg : ""}
+          />
+        </View>
+        <Avatar
+          onPress={() => avatarPicker(true)}
+          showAccessory
+          accessory={{
+            name: "check",
+            type: "material",
+            color: "green",
+          }}
+          size="medium"
+          rounded
+          source={{
+            uri: _avatar || "",
+          }}
+        />
+      </View>
+
+      {_showAvatarPicker && (
+        <ScrollView horizontal>
+          {xAvatars.map((a, i) => {
+            return (
+              <Avatar
+                onPress={() => {
+                  selectAvatar(a.url);
+                  avatarPicker(false);
+                }}
+                key={i}
+                showAccessory={_avatar === a.url}
+                accessory={{
+                  name: "check",
+                  type: "material",
+                  color: "green",
+                }}
+                size="medium"
+                rounded
+                source={{
+                  uri: a.url,
+                }}
+              />
+            );
+          })}
+        </ScrollView>
+      )}
+
       <CheckBox
         title="Include Email and Password"
         checked={_includeEP}
@@ -268,28 +295,7 @@ const AddMemberScreen = ({ navigation }) => {
         </View>
       )}
       <View style={vs30} />
-      <Text style={h5Style}>Select Avatar</Text>
-      <ScrollView horizontal>
-        {avatars.map((a, i) => {
-          return (
-            <Avatar
-              onPress={() => selectAvatar(a.url)}
-              key={i}
-              showAccessory={_avatar === a.url}
-              accessory={{
-                name: "check",
-                type: "material",
-                color: "green",
-              }}
-              size="medium"
-              rounded
-              source={{
-                uri: a.url,
-              }}
-            />
-          );
-        })}
-      </ScrollView>
+
       <View style={vs30} />
       <Button loading={_loading} onPress={handleSubmit} title="Add Memeber" />
       {_submitError && (

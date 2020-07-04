@@ -13,34 +13,40 @@ import { useDispatch } from "react-redux/lib/hooks/useDispatch";
 import { useSelector } from "react-redux";
 import { useFirestoreConnect } from "react-redux-firebase";
 import { CONFIRMED } from "../../constants/helperConstants";
+import { ScrollView } from "react-native-gesture-handler";
 const InviteMembersScreen = ({ navigation }) => {
   const [_inviteList, setInviteList] = useState([]);
 
-  const [_group, setGroup] = useState({});
   const [_inviting, inviting] = useState(false);
   const dispatch = useDispatch();
   const [count, setCount] = useState(-1);
   const xGame = useSelector((state) => state.game || {});
+  const xGroup = useSelector((state) => state.group || {});
+
+  const [_game, setGame] = useState({});
   const firestore = firebase.firestore();
   const inviteMemebers = async () => {
     inviting(true);
-
-    let uMemebers = xGame.members;
-
-    Object.keys(uMemebers).map((id, i) => {
-      if (_inviteList.filter((i) => i.id === id).length > 0) {
-        uMemebers[`${id}`].dispatchTo = true;
-      } else {
-        uMemebers[`${id}`].dispatchTo = false;
-      }
-    });
-
     try {
-      await firestore.collection("games").doc(route.params.id).update({
+      console.log("1");
+      let updateGame = xGame;
+      console.log("2", updateGame);
+      let uMemebers = updateGame.members;
+      console.log("3");
+      Object.keys(uMemebers).map((id, i) => {
+        if (_inviteList.filter((i) => i.id === id).length > 0) {
+          uMemebers[`${id}`].dispatchTo = true;
+        } else {
+          uMemebers[`${id}`].dispatchTo = false;
+        }
+      });
+      console.log("part 4");
+
+      await firestore.collection("games").doc(xGame.id).update({
         members: uMemebers,
       });
 
-      await firestore.collection("games").doc(route.params.id).update({
+      await firestore.collection("games").doc(xGame.id).update({
         dispatched: true,
       });
 
@@ -53,11 +59,11 @@ const InviteMembersScreen = ({ navigation }) => {
         }
       });
 
-      xGame.members = uMemebers;
-      xGame.dispatched = true;
+      updateGame.members = uMemebers;
+      updateGame.dispatched = true;
 
-      dispatch({ type: SET_GAME, payload: { id: route.params.id, ...xGame } });
-      dispatch({ type: UPDATE_GAME_S, payload: xGame });
+      dispatch({ type: SET_GAME, payload: updateGame });
+      dispatch({ type: UPDATE_GAME_S, payload: updateGame });
       setInviteList([]);
       setCount(count + 1);
       inviting(false);
@@ -68,96 +74,100 @@ const InviteMembersScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    console.log(xGame);
+    !_.isEmpty(xGame) && setGame({ ...xGame });
+    console.log("id2", _game);
   }, [xGame]);
 
-  if (_.isEmpty(xGame) || _inviting) return <ActivityIndicator />;
+  if (_.isEmpty(xGame) || _.isEmpty(xGroup) || _inviting)
+    return <ActivityIndicator />;
 
   return (
-    <View>
+    <ScrollView>
       <Text>InviteMembersScreen</Text>
 
       {!_.isEmpty(xGame) && <GameSummary game={xGame} />}
 
       <Text style={h2Style}> Member List</Text>
-      {_group?.members &&
-        Object.keys(_group.members).map((id, i) => {
-          return (
-            <ListItem
-              key={i}
-              subtitle={
-                xGame.members[`${id}`].confirmed
-                  ? `${xGame.members[`${id}`].confirmed} on ${formatDistance(
-                      new Date(xGame.members[`${id}`].dispatchedDate),
-                      new Date(Date.now())
-                    )}`
-                  : "Not invited yet"
-              }
-              leftAvatar={{
-                source: { uri: _group.members[`${id}`].photoURL },
-              }}
-              title={_group.members[`${id}`].displayName}
-              rightIcon={
-                _inviteList.filter((i) => i.id === id).length > 0 ? (
-                  <Icon
+      {xGroup?.members &&
+        Object.keys(xGroup.members)
+          .filter((m) => m !== xGroup.hostUid)
+          .map((id, i) => {
+            return (
+              <ListItem
+                key={i}
+                subtitle={
+                  xGame.members[`${id}`].confirmed
+                    ? `${xGame.members[`${id}`].confirmed} on ${formatDistance(
+                        new Date(xGame.members[`${id}`].dispatchedDate),
+                        new Date(Date.now())
+                      )}`
+                    : "Not invited yet"
+                }
+                leftAvatar={{
+                  source: { uri: xGroup.members[`${id}`].photoURL },
+                }}
+                title={xGroup.members[`${id}`].displayName}
+                rightIcon={
+                  _inviteList.filter((i) => i.id === id).length > 0 ? (
+                    <Icon
+                      onPress={() =>
+                        setInviteList(_inviteList.filter((i) => i.id !== id))
+                      }
+                      name="sc-telegram"
+                      type="evilicon"
+                      color="#517fa4"
+                    />
+                  ) : (
+                    <Icon
+                      onPress={() =>
+                        setInviteList([
+                          ..._inviteList,
+                          Object.assign(
+                            {},
+                            { id: id, ...xGroup.members[`${id}`] }
+                          ),
+                        ])
+                      }
+                      name="plus"
+                      type="evilicon"
+                      color="#517fa4"
+                    />
+                  )
+                }
+                rightElement={
+                  <Button
+                    title="..."
                     onPress={() =>
-                      setInviteList(_inviteList.filter((i) => i.id !== id))
+                      navigation.navigate("ManagePlayerInGameScreen", {
+                        member: xGroup.members[`${id}`],
+                        memberId: id,
+                        game: _game,
+                      })
                     }
-                    name="sc-telegram"
-                    type="evilicon"
-                    color="#517fa4"
                   />
-                ) : (
-                  <Icon
-                    onPress={() =>
-                      setInviteList([
-                        ..._inviteList,
-                        Object.assign(
-                          {},
-                          { id: id, ..._group.members[`${id}`] }
-                        ),
-                      ])
-                    }
-                    name="plus"
-                    type="evilicon"
-                    color="#517fa4"
-                  />
-                )
-              }
-              rightElement={
-                <Button
-                  title="..."
-                  onPress={() =>
-                    navigation.navigate("ManagePlayerInGameScreen", {
-                      member: _group.members[`${id}`],
-                      memberId: id,
-                      game: xGame,
-                    })
-                  }
-                />
-              }
-              // onPress={
-              //   _inviteList.filter((i) => i.id === id).length > 0
-              //     ? () => setInviteList(_inviteList.filter((i) => i.id !== id))
-              //     : () =>
-              //         setInviteList([
-              //           ..._inviteList,
-              //           Object.assign(
-              //             {},
-              //             { id: id, ..._group.members[`${id}`] }
-              //           ),
-              //         ])
-              // }
-            />
-          );
-        })}
+                }
+                // onPress={
+                //   _inviteList.filter((i) => i.id === id).length > 0
+                //     ? () => setInviteList(_inviteList.filter((i) => i.id !== id))
+                //     : () =>
+                //         setInviteList([
+                //           ..._inviteList,
+                //           Object.assign(
+                //             {},
+                //             { id: id, ...xGroup.members[`${id}`] }
+                //           ),
+                //         ])
+                // }
+              />
+            );
+          })}
 
       <Button
         loading={_inviting}
         onPress={inviteMemebers}
         title={`Send to ${_inviteList.length} members`}
       />
-    </View>
+    </ScrollView>
   );
 };
 

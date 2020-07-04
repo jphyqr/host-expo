@@ -9,9 +9,8 @@ export const CONFIRMED = {
 
 export const PRIVACY = {
   OPEN: "OPEN",
-  LOCAL: "LOCAL",
+
   PRIVATE: "PRIVATE",
-  HIDDEN: "HIDDEN",
 };
 
 export const GAME_STATES = {

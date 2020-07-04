@@ -63,9 +63,22 @@ export const vs10 = {
   height: 10,
 };
 
+export const column = {
+  flexDirection: "column",
+  alignItems: "center",
+  width: "100%",
+  justifyContent: "center",
+};
+
 export const spacedRow = {
   flexDirection: "row",
-  flexWrap: "wrap",
+  justifyContent: "space-between",
+  width: "100%",
+  alignItems: "center",
+};
+
+export const averageRow = {
+  flexDirection: "row",
   justifyContent: "space-around",
   width: "100%",
   alignItems: "center",

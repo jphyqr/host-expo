@@ -78,7 +78,7 @@ const ManagePlayerInGameScreen = ({ route }) => {
   const updateSeating = async (i) => {
     let updatedGame = _game;
     let updatedSeating = _game.seating;
-    let updatedWaitList = _game.waitList;
+    let updatedWaitList = _game.waitList || [];
     //if player was sitting in a seat, clear that seat.
     let indexOfCurrent = -1;
     indexOfCurrent = updatedSeating.findIndex((i) => i.uid === _member.id);

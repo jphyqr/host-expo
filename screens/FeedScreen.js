@@ -15,11 +15,28 @@ import { useFirestoreConnect } from "react-redux-firebase";
 import { Avatar, Card, ListItem, Icon, Badge } from "react-native-elements";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { useDispatch } from "react-redux/lib/hooks/useDispatch";
-import { SET_GAME, SET_GROUP, SET_GAME_S } from "../constants/reducerConstants";
+import {
+  SET_GAME,
+  SET_GROUP,
+  SET_GAME_S,
+  SET_MEMBER_OF_GROUP,
+  SET_GROUP_S,
+  SET_HOST_GROUPS,
+  SET_MEMBER_GROUPS,
+  SET_INVITE_GROUPS,
+  SET_AREA_GROUPS,
+} from "../constants/reducerConstants";
 import { registerForPushNotifications } from "../services/push_notifications";
 import { Notifications } from "expo";
 import axios from "axios";
-import { h2Style, h6Style, h7Style } from "../styles/styles";
+import {
+  h2Style,
+  h6Style,
+  h7Style,
+  spacedRow,
+  column,
+  h5Style,
+} from "../styles/styles";
 const FeedScreen = ({ navigation }) => {
   const auth = useSelector((state) => state.firebase.auth);
   const ROOT_URL = "https://us-central1-poker-cf130.cloudfunctions.net";
@@ -29,8 +46,17 @@ const FeedScreen = ({ navigation }) => {
   const [_feed, setFeed] = useState([]);
   const [_games, setGames] = useState([]);
   const [_groups, setGroups] = useState([]);
-  const [_host_groups, setHostGroups] = useState([]);
+  const [_groups_invited, setInvitedGroups] = useState([]);
   const [_member_groups, setMemberGroups] = useState([]);
+  const [_host_groups, setHostGroups] = useState([]);
+  const xHostGroups = useSelector((state) => state.hostGroups || []);
+
+  const xAreaGroups = useSelector((state) => state.areaGroups || []);
+
+  const xInviteGroups = useSelector((state) => state.inviteGroups || []);
+
+  const xMemberGroups = useSelector((state) => state.memberGroups || []);
+
   const [_area_groups, setAreaGroups] = useState([]);
   const [_my_invites, setMyInvites] = useState([]);
   const [_newFeed, setNewFeed] = useState(false);
@@ -53,6 +79,26 @@ const FeedScreen = ({ navigation }) => {
   }, [profile]);
 
   useEffect(() => {
+    setHostGroups(xHostGroups);
+    setCount(count + 1);
+  }, [xHostGroups]);
+
+  useEffect(() => {
+    setAreaGroups(xAreaGroups);
+    setCount(count + 1);
+  }, [xAreaGroups]);
+  useEffect(() => {
+    console.log("INVITE GROUPS CHANGED");
+    setInvitedGroups(xInviteGroups);
+    setCount(count + 1);
+  }, [xInviteGroups]);
+  useEffect(() => {
+    console.log("MEMBER GROUPS CHANGED");
+    setMemberGroups(xMemberGroups);
+    setCount(count + 1);
+  }, [xMemberGroups]);
+
+  useEffect(() => {
     const getFeedItems = async () => {
       loading(true);
       if (auth.isLoaded && !auth.isEmpty) {
@@ -68,14 +114,22 @@ const FeedScreen = ({ navigation }) => {
           other_groups_in_area,
           feed,
           games_registering,
+          groupsInvited,
         } = data || [];
 
         setGroups(other_groups_in_area);
-        setHostGroups(hostGroups);
-        setMemberGroups(justMember);
-        setAreaGroups(other_groups_in_area);
+
+        dispatch({ type: SET_HOST_GROUPS, payload: hostGroups });
+        dispatch({ type: SET_MEMBER_GROUPS, payload: justMember });
+
+        dispatch({ type: SET_INVITE_GROUPS, payload: groupsInvited });
+
+        dispatch({ type: SET_AREA_GROUPS, payload: other_groups_in_area });
+
         setFeed(feed);
         setGames(games_registering);
+
+        setCount(count + 1);
         dispatch({ type: SET_GAME_S, payload: games_registering });
         loading(false);
       }
@@ -112,13 +166,13 @@ const FeedScreen = ({ navigation }) => {
 
   return (
     <ScrollView>
-      <ScrollView style={{ marginBottom: 20 }} horizontal>
-        <View style={{ marginRight: 5 }}>
+      <View style={{ display: "flex", flexDirection: "row" }}>
+        <View style={{ marginRight: 20 }}>
           <Avatar
             key={"profile"}
             rounded
             source={{ uri: profile.photoURL }}
-            size="medium"
+            size="small"
             showAccessory
             accessory={{
               name: "add",
@@ -130,80 +184,199 @@ const FeedScreen = ({ navigation }) => {
               navigation.openDrawer();
             }}
           />
-
-          <Text style={{ fontSize: 10 }}>{profile.displayName}</Text>
         </View>
-
-        {_host_groups.map((item, i) => {
-          return (
-            <View key={i} style={{ marginRight: 5 }}>
+        <View style={{ flexDirection: "column" }}>
+          <Text style={h5Style}>My Groups</Text>
+          <ScrollView
+            style={{ marginBottom: 20 }}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
+            <View style={{ marginRight: 5 }}>
               <Avatar
+                key={"creategroup"}
                 rounded
-                showAccessory
-                accessory={{
-                  name: "mode-edit",
-                  type: "material",
-                  color: item.notificationBadge ? "red" : "grey",
-                }}
-                source={{ uri: item.groupPhotoURL }}
-                size="large"
+                icon={{ name: "add" }}
+                size="medium"
                 overlayContainerStyle={{ backgroundColor: "blue" }}
                 onPress={() => {
-                  dispatch({ type: SET_GROUP, payload: item.groupId });
-                  navigation.navigate("GroupAdminScreen");
+                  navigation.navigate("CreateGroupFlow");
                 }}
               />
-              <Text style={{ fontSize: 10 }}>{item.groupName}</Text>
-            </View>
-          );
-        })}
 
-        {_member_groups.map((item, i) => {
-          return (
-            <View key={i} style={{ marginRight: 5 }}>
-              <Avatar
-                rounded
-                source={{ uri: item.groupPhotoURL }}
-                size="large"
-                overlayContainerStyle={{ backgroundColor: "blue" }}
-                onPress={() => {
-                  dispatch({ type: SET_GROUP, payload: item.groupId });
-                  navigation.navigate("GroupScreen");
-                }}
-              />
-              <Text style={{ fontSize: 10 }}>{item.groupName}</Text>
+              <Text style={{ fontSize: 10 }}>Create Group</Text>
             </View>
-          );
-        })}
 
-        {_area_groups.map((item, i) => {
-          return (
-            <View key={i} style={{ marginRight: 5 }}>
-              <Avatar
-                rounded
-                source={{ uri: item.groupPhotoURL }}
-                size="large"
-                showAccessory
-                accessory={{
-                  name: "add",
-                  type: "material",
-                  color: "red",
-                }}
-                overlayContainerStyle={{ backgroundColor: "blue" }}
-                onPress={() => {
-                  dispatch({ type: SET_GROUP, payload: item.groupId });
-                  navigation.navigate("GroupScreen");
-                }}
-              />
-              <Text style={{ fontSize: 10 }}>{item.groupName}</Text>
-              <Badge
-                status="success"
-                containerStyle={{ position: "absolute", bottom: 2, right: 2 }}
-              />
-            </View>
-          );
-        })}
-      </ScrollView>
+            {_groups_invited?.map((item, i) => {
+              return (
+                <View key={i} style={{ marginRight: 5 }}>
+                  <Avatar
+                    rounded
+                    showAccessory
+                    accessory={{
+                      name: "mail",
+                      type: "material",
+                      color: "red",
+                    }}
+                    source={{ uri: item.groupPhotoURL }}
+                    size="medium"
+                    overlayContainerStyle={{ backgroundColor: "blue" }}
+                    onPress={async () => {
+                      try {
+                        loading(true);
+                        let groupDoc = await firestore
+                          .collection("groups")
+                          .doc(item.groupId)
+                          .get();
+
+                        dispatch({
+                          type: SET_GROUP,
+                          payload: { id: item.groupId, ...groupDoc.data() },
+                        });
+                        loading(false);
+                      } catch (error) {
+                        console.log("error moving groups", error);
+                        loading(false);
+                      }
+
+                      console.log("group set, should navigate ");
+                      navigation.navigate("GroupScoutScreen");
+                    }}
+                  />
+                  <Text style={{ fontSize: 10 }}>invited</Text>
+                </View>
+              );
+            })}
+
+            {_host_groups?.map((item, i) => {
+              return (
+                <View key={i} style={{ marginRight: 5 }}>
+                  <Avatar
+                    rounded
+                    showAccessory
+                    accessory={{
+                      name: "security",
+                      type: "material",
+                      color: item.notificationBadge ? "red" : "black",
+                    }}
+                    source={{ uri: item.groupPhotoURL }}
+                    size="medium"
+                    overlayContainerStyle={{ backgroundColor: "blue" }}
+                    onPress={async () => {
+                      try {
+                        console.log("pressed", item);
+                        loading(true);
+                        let groupDoc = await firestore
+                          .collection("groups")
+                          .doc(item.groupId)
+                          .get();
+                        dispatch({
+                          type: SET_GROUP,
+                          payload: { id: item.groupId, ...groupDoc.data() },
+                        });
+                        loading(false);
+                      } catch (error) {
+                        console.log("error moving groups", error);
+                        loading(false);
+                      }
+
+                      console.log("group set, should navigate ");
+                      navigation.navigate("ManageGroupFlow");
+                    }}
+                  />
+                  <Text style={{ fontSize: 10 }}>{item.groupName}</Text>
+                </View>
+              );
+            })}
+
+            {_member_groups.map((item, i) => {
+              return (
+                <View key={i} style={{ marginRight: 5 }}>
+                  <Avatar
+                    rounded
+                    source={{ uri: item.groupPhotoURL }}
+                    size="medium"
+                    overlayContainerStyle={{ backgroundColor: "blue" }}
+                    showAccessory
+                    accessory={{
+                      name: "verified-user",
+                      type: "material",
+                      color: item.notificationBadge ? "red" : "grey",
+                    }}
+                    onPress={async () => {
+                      try {
+                        loading(true);
+                        let groupDoc = await firestore
+                          .collection("groups")
+                          .doc(item.groupId)
+                          .get();
+
+                        dispatch({
+                          type: SET_GROUP,
+                          payload: { id: groupDoc.id, ...groupDoc.data() },
+                        });
+
+                        dispatch({ type: SET_MEMBER_OF_GROUP, payload: item });
+                        loading(false);
+                        navigation.navigate("GroupScreen");
+                      } catch (error) {
+                        console.log("error moving", error);
+                        loading(false);
+                      }
+                    }}
+                  />
+                  <Text style={{ fontSize: 10 }}>{item.groupName}</Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+          <Text style={h7Style}>Other groups In Area</Text>
+          <ScrollView
+            style={{ marginBottom: 20 }}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
+            {_area_groups.map((item, i) => {
+              return (
+                <View key={i} style={{ marginRight: 5 }}>
+                  <Avatar
+                    rounded
+                    source={{ uri: item.groupPhotoURL }}
+                    size="medium"
+                    overlayContainerStyle={{ backgroundColor: "blue" }}
+                    onPress={async () => {
+                      try {
+                        loading(true);
+                        let groupDoc = await firestore
+                          .collection("groups")
+                          .doc(item.groupId)
+                          .get();
+
+                        dispatch({
+                          type: SET_GROUP,
+                          payload: { id: groupDoc.id, ...groupDoc.data() },
+                        });
+
+                        dispatch({ type: SET_MEMBER_OF_GROUP, payload: item });
+                        loading(false);
+                        navigation.navigate("GroupPreviewScreen");
+                      } catch (error) {
+                        console.log("error moving", error);
+                        loading(false);
+                      }
+                    }}
+                  />
+                  <Text
+                    style={{ fontSize: 10, width: "100%", textAlign: "center" }}
+                  >
+                    {item.groupName}
+                  </Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
 
       <Text style={h2Style}>Live Games</Text>
       <ScrollView horizontal>

@@ -4,6 +4,8 @@ import {
   CREATE_GAME,
   DELETE_GAME,
   SET_GAME,
+  DELETE_GROUP,
+  DELETE_HOST_GROUP,
 } from "../constants/reducerConstants";
 
 export const deleteGame = ({ firestore }, id) => {
@@ -74,7 +76,7 @@ export const createGame = ({ firestore }, group, groupId) => {
         dispatched: false,
         game_set: false,
         gameState:
-          group.privacy === PRIVACY.LOCAL
+          group.privacy === PRIVACY.OPEN
             ? GAME_STATES.OPEN_REGISTRATION
             : GAME_STATES.PRIVATE_REGISTRATION,
         groupName: group.name,
@@ -108,7 +110,7 @@ export const createGame = ({ firestore }, group, groupId) => {
           game_set: false,
           gameName: `${group.name}'s Game`,
           gameState:
-            group.privacy === PRIVACY.LOCAL
+            group.privacy === PRIVACY.OPEN
               ? GAME_STATES.OPEN_REGISTRATION
               : GAME_STATES.PRIVATE_REGISTRATION,
           privacy: group.privacy,
@@ -120,6 +122,74 @@ export const createGame = ({ firestore }, group, groupId) => {
       return newGame;
     } catch (error) {
       console.log({ error });
+    }
+  };
+};
+
+export const deleteGroup = ({ firestore }) => {
+  return async (dispatch, getState) => {
+    try {
+      //  console.log("delete game", getState());
+      const state = getState();
+      const userUid = state.firebase.auth.uid;
+      const id = state.group.id;
+
+      var batch = firestore.batch();
+
+      //groups table
+      var groupRef = firestore.collection("groups").doc(id);
+      //all the group_games -->delete these and then for each game, delete invites
+
+      var groupNotificationsQuery = firestore
+        .collection("groups_notifications")
+        .where("groupId", "==", id);
+
+      var groupNotificationSnap = await groupNotificationsQuery.get();
+      groupNotificationSnap.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      var groupMemberQuery = firestore
+        .collection("group_member")
+        .where("groupId", "==", id);
+
+      var groupMemberSnap = await groupMemberQuery.get();
+      groupMemberSnap.forEach((doc) => {
+        console.log("should delete groupMember", doc.id);
+        batch.delete(doc.ref);
+      });
+
+      var groupGameQuery = firestore
+        .collection("groups_games")
+        .where("groupId", "==", id);
+
+      var groupGameSnap = await groupGameQuery.get();
+
+      groupGameSnap.forEach(async (doc) => {
+        let inviteQuery = firestore
+          .collection("game_invite")
+          .where("gameId", "==", doc.data().gameId);
+        let inviteSnap = await inviteQuery.get();
+
+        inviteSnap.forEach((doc2) => {
+          batch.delete(doc2.ref);
+        });
+
+        batch.delete(doc.ref);
+      });
+      batch.delete(groupRef);
+
+      await batch.commit();
+
+      dispatch({
+        type: DELETE_HOST_GROUP,
+        payload: { id: `${id}_${userUid}` },
+      });
+
+      return;
+    } catch (error) {
+      console.log("Error deleting", error);
+      return error;
     }
   };
 };

@@ -9,14 +9,18 @@ export const registerForPushNotifications = async (userId) => {
   if (previousToken) {
     return;
   } else {
-    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
 
     if (status !== "granted") {
       return;
     } else {
-      let token = await Notifications.getExpoPushTokenAsync();
+      try {
+        let token = await Notifications.getExpoPushTokenAsync();
 
-      AsyncStorage.setItem("pushtoken", token);
+        AsyncStorage.setItem("pushtoken", token);
+      } catch (error) {
+        console.log("error push_notifictaions", error);
+      }
     }
   }
 };

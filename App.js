@@ -16,7 +16,7 @@ import firebase from "./firebase";
 import { TabNavigator, StackNavigator } from "react-navigation";
 import { ReactReduxFirebaseProvider } from "react-redux-firebase";
 import WelcomeScreen from "./screens/WelcomeScreen";
-
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -49,8 +49,18 @@ import { useDispatch } from "react-redux/lib/hooks/useDispatch";
 import CreateGameScreen from "./screens/CreateGame/CreateGameScreen";
 import ManagePlayerInGameScreen from "./screens/CreateGame/ManagePlayerInGameScreen";
 import InviteMembersScreen from "./screens/CreateGame/InviteMembersScreen";
-import { SET_GAME, SET_GROUP } from "./constants/reducerConstants";
+import {
+  SET_GAME,
+  SET_GROUP,
+  SET_AVATARS,
+  DELETE_GROUP,
+} from "./constants/reducerConstants";
 import AddMemberScreen from "./screens/AddMemberScreen";
+import CreateGroupScreen from "./screens/CreateGroupScreen";
+import { deleteGroup } from "./actions/gameActions";
+import InviteGroupMembersScreen from "./screens/InviteGroupMembersScreen";
+import GroupScoutScreen from "./screens/GroupScoutScreen";
+import GroupPreviewScreen from "./screens/GroupPreviewScreen";
 const { store, persistor } = configureStore();
 
 const App = () => {
@@ -84,11 +94,18 @@ const App = () => {
 function WrappedApp({ navigation }) {
   const Stack = createStackNavigator();
   const Tab = createBottomTabNavigator();
+  const TopTab = createMaterialTopTabNavigator();
   const firestore = firebase.firestore();
   const dispatch = useDispatch();
+
   useEffect(() => {
     const checkPermissions = async () => {
-      await registerForPushNotifications();
+      try {
+        await registerForPushNotifications();
+      } catch (error) {
+        console.log("error with notifications", error);
+      }
+
       Notifications.addListener(async (notification) => {
         const { data, origin } = notification;
         const { routeId, action } = data || {};
@@ -106,12 +123,23 @@ function WrappedApp({ navigation }) {
             }
             break;
           case "GROUP_USER": {
-            dispatch({ type: SET_GROUP, payload: routeId });
+            let groupDoc = await firestore
+              .collection("groups")
+              .doc(routeId)
+              .get();
+            let group = { id: groupDoc.id, ...groupDoc.data() };
+
             navigation.navigate("GroupScreen");
           }
           case "GROUP":
             {
-              dispatch({ type: SET_GROUP, payload: routeId });
+              let groupDoc = await firestore
+                .collection("groups")
+                .doc(routeId)
+                .get();
+              let group = { id: groupDoc.id, ...groupDoc.data() };
+
+              dispatch({ type: SET_GROUP, payload: group });
               navigation.navigate("GroupAdminScreen");
             }
             break;
@@ -120,7 +148,31 @@ function WrappedApp({ navigation }) {
       });
     };
 
+    const loadAvatars = async () => {
+      let avatars = [];
+      let venue_avatars = [];
+      try {
+        let avatarsSnap = await firestore.collection("stock_avatars").get();
+
+        avatarsSnap.forEach((doc) => {
+          avatars.push({ ...doc.data() });
+        });
+
+        let venueAvatars = await firestore.collection("venue_avatars").get();
+
+        venueAvatars.forEach((doc) => {
+          venue_avatars.push({ ...doc.data() });
+        });
+
+        dispatch({
+          type: SET_AVATARS,
+          payload: { user: avatars, venue: venue_avatars },
+        });
+      } catch (error) {}
+    };
+
     checkPermissions();
+    loadAvatars();
   }, []);
 
   const registerForPushNotificationsAsync = async () => {
@@ -154,6 +206,35 @@ function WrappedApp({ navigation }) {
     }
   };
 
+  const handleDeleteGroup = async (navigation) => {
+    Alert.alert(
+      "Delete Group",
+      "This will delete all games, and stats for group.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete Group",
+          onPress: async () => {
+            try {
+              await dispatch(deleteGroup({ firestore }));
+
+              console.log("should navigate to main");
+
+              navigation.navigate("FeedScreen");
+              navigation.goBack();
+            } catch (error) {
+              console.log("error", error);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   const CreateGame = () => {
     return (
       <Stack.Navigator>
@@ -167,7 +248,49 @@ function WrappedApp({ navigation }) {
   };
 
   const GroupAdmin = () => {
-    return <Stack.Navigator></Stack.Navigator>;
+    return (
+      <Drawer.Navigator
+        drawerPosition="right"
+        initialRouteName="GroupAdmin"
+        drawerContent={(props) => <GroupAdminCustom {...props} />}
+      >
+        <Drawer.Screen name="GroupAdmin" component={GroupAdminScreen} />
+      </Drawer.Navigator>
+    );
+  };
+
+  const CreateGroupFlow = () => {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen name="CreateGroupScreen" component={CreateGroupScreen} />
+        <Stack.Screen
+          name="InviteGroupMembersScreen"
+          component={InviteGroupMembersScreen}
+        />
+      </Stack.Navigator>
+    );
+  };
+
+  const ManageGroupFlow = () => {
+    return (
+      // <Stack.Navigator>
+      //   <Stack.Screen name="GroupAdminScreen" component={GroupAdmin} />
+      //   <Stack.Screen
+      //     name="InviteGroupMembersScreen"
+      //     component={InviteGroupMembersScreen}
+      //   />
+      // </Stack.Navigator>
+
+      <TopTab.Navigator>
+        <TopTab.Screen name="GroupAdminScreen" component={GroupAdmin} />
+        <TopTab.Screen
+          name="InviteGroupMembersScreen"
+          component={InviteGroupMembersScreen}
+        />
+
+        <TopTab.Screen name="AddMemberScreen" component={AddMemberScreen} />
+      </TopTab.Navigator>
+    );
   };
 
   const Feed = () => {
@@ -175,8 +298,19 @@ function WrappedApp({ navigation }) {
       <Stack.Navigator>
         <Stack.Screen name="FeedScreen" component={FeedScreen} />
         <Stack.Screen name="GameScreen" component={GameScreen} />
+        <Stack.Screen name="GroupScoutScreen" component={GroupScoutScreen} />
+
+        <Stack.Screen
+          name="GroupPreviewScreen"
+          component={GroupPreviewScreen}
+        />
+
+        <Stack.Screen name="CreateGroupFlow" component={CreateGroupFlow} />
+
+        <Stack.Screen name="ManageGroupFlow" component={ManageGroupFlow} />
+
         <Stack.Screen name="GroupScreen" component={GroupScreen} />
-        <Stack.Screen name="GroupAdminScreen" component={GroupAdminScreen} />
+
         <Stack.Screen name="AddMemberScreen" component={AddMemberScreen} />
 
         <Stack.Screen name="CreateGameScreen" component={CreateGameScreen} />
@@ -194,20 +328,10 @@ function WrappedApp({ navigation }) {
     );
   };
 
-  const CreateGroup = () => {
-    return (
-      <Stack.Navigator>
-        <Stack.Screen name="CreateGroupScreen" component={FeedScreen} />
-        <Stack.Screen name="GameScreen" component={GameScreen} />
-      </Stack.Navigator>
-    );
-  };
-
   const MainClosed = () => {
     return (
       <Tab.Navigator>
         <Tab.Screen name="Feed" component={Feed} />
-        <Tab.Screen name="CreateGroup" component={CreateGroup} />
 
         <Tab.Screen name="AreaScreen" component={AreaScreen} />
 
@@ -235,6 +359,19 @@ function WrappedApp({ navigation }) {
           onPress={() => {
             firebase.auth().signOut();
           }}
+        />
+      </DrawerContentScrollView>
+    );
+  }
+
+  function GroupAdminCustom({ navigation, ...props }) {
+    return (
+      <DrawerContentScrollView {...props}>
+        <DrawerItemList {...props} />
+
+        <DrawerItem
+          label="Delete Group"
+          onPress={() => handleDeleteGroup(navigation)}
         />
       </DrawerContentScrollView>
     );

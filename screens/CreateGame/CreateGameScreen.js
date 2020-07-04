@@ -171,15 +171,15 @@ const CreateGameScreen = ({ route, navigation }) => {
       console.log("save game 4");
       updatedGame["gameSettings"] = updatedGameSettings;
       console.log("save game 5");
+      console.log("id", updatedGame.id);
       dispatch({ type: SET_GAME, payload: updatedGame });
       console.log("navigating...");
+      loading(false);
       navigation.navigate("InviteMembersScreen");
     } catch (error) {
       console.log("ERROR", error);
       loading(false);
     }
-
-    loading(false);
   };
 
   const handleDeleteGame = async () => {
