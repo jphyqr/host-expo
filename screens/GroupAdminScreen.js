@@ -75,10 +75,10 @@ const GroupAdminScreen = ({ navigation }) => {
 
     try {
       let createdGame = await dispatch(
-        createGame({ firestore }, _group, _group.id)
+        createGame({ firestore }, navigation, _group, _group.id)
       );
       console.log({ createdGame });
-      navigation.navigate("CreateGameScreen");
+
       loading(false);
     } catch (error) {
       console.log({ error });
@@ -163,40 +163,30 @@ const GroupAdminScreen = ({ navigation }) => {
         <View>
           <View style={vs10} />
           {!_.isEmpty(_group?.members) && <Text syle={h4Style}>Members</Text>}
-          {Object.keys(_group?.members)?.map((g, i) => {
-            return (
-              <ListItem
-                key={i}
-                title={_group?.members[`${g}`].displayName}
-                chevron
-                onPress={() =>
-                  navigation.navigate("GroupMemberScreen", {
-                    user: _group?.members[`${g}`],
-                    id: g,
-                    pending: false,
-                  })
-                }
-              />
-            );
-          })}
+          {Object.keys(_group?.members)
+            ?.filter((id) => id !== auth.uid)
+            .map((g, i) => {
+              return (
+                <ListItem
+                  key={i}
+                  title={_group?.members[`${g}`].displayName}
+                  chevron
+                  leftAvatar={{
+                    source: { uri: _group?.members[`${g}`].photoURL },
+                  }}
+                  onPress={() =>
+                    navigation.navigate("GroupMemberScreen", {
+                      user: _group?.members[`${g}`],
+                      id: g,
+                      pending: false,
+                    })
+                  }
+                />
+              );
+            })}
         </View>
       )}
 
-      <Button
-        onPress={() =>
-          navigation.navigate("AddMemberScreen", {
-            groupId: _group.id,
-            groupName: _group.name,
-          })
-        }
-        type="outline"
-        title="Add Member by Phone"
-      />
-      <Button
-        onPress={() => navigation.navigate("InviteGroupMembersScreen")}
-        type="outline"
-        title="Invite Members in Area"
-      />
       <View style={vs30} />
       <Text style={h3Style}>Groups Games</Text>
 
@@ -232,17 +222,10 @@ const GroupAdminScreen = ({ navigation }) => {
 
       <View style={spacedRow}>
         <Button
-          loading={_deleting}
-          type="outline"
-          onPress={handleDeleteGroup}
-          title="Delete Group"
-        />
-
-        <Button
           loading={_loading}
           type="solid"
           onPress={handleCreateGameClick}
-          title="CreateGame"
+          title="Create Game"
           icon={{
             name: "add",
             size: 15,

@@ -42,7 +42,7 @@ export const deleteGame = ({ firestore }, id) => {
   };
 };
 
-export const createGame = ({ firestore }, group, groupId) => {
+export const createGame = ({ firestore }, navigation, group, groupId) => {
   return async (dispatch, getState) => {
     console.log("crateGame Action");
 
@@ -117,6 +117,9 @@ export const createGame = ({ firestore }, group, groupId) => {
         });
 
       dispatch({ type: SET_GAME, payload: newGame });
+
+      navigation.navigate("CreateGameFlow");
+
       dispatch({ type: CREATE_GAME, payload: { id: newGame.id, ...newGame } });
 
       return newGame;

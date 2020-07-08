@@ -71,15 +71,6 @@ const InviteGroupMembersScreen = ({ navigation }) => {
       <Text style={h2Style}>Users In Area</Text>
       <Text style={h4Style}>Select users to invite to this group</Text>
 
-      <Button
-        onPress={() => {
-          navigation.goBack();
-          navigation.navigate("Main");
-          navigation.navigate("ManageGroupFlow");
-        }}
-        title={`Manage Group`}
-      />
-
       {_inviteList.length > 0 && (
         <Button
           loading={_loading}
@@ -88,7 +79,10 @@ const InviteGroupMembersScreen = ({ navigation }) => {
         />
       )}
       {_usersInArea
-        ?.filter((u) => u.id !== _group.hostUid)
+        ?.filter(
+          (u) =>
+            Object.keys(_group.members).filter((k) => k == u.id).length === 0
+        )
         .map((u, i) => {
           return (
             <ListItem

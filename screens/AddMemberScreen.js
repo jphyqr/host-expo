@@ -11,6 +11,7 @@ import {
   selectedAvatar,
   errorStyle,
   spacedRow,
+  vsKeyboard,
 } from "../styles/styles";
 import { useSelector, useDispatch } from "react-redux";
 import _ from "lodash";
@@ -18,7 +19,10 @@ import axios from "axios";
 import firebase from "../firebase";
 import { useFirestoreConnect } from "react-redux-firebase";
 import { ScrollView } from "react-native-gesture-handler";
-import { ADD_MEMBER_TO_GROUP } from "../constants/reducerConstants";
+import {
+  ADD_MEMBER_TO_GROUP,
+  ADD_MEMBER_TO_AREA,
+} from "../constants/reducerConstants";
 const ROOT_URL = "https://us-central1-poker-cf130.cloudfunctions.net";
 
 const AddMemberScreen = ({ navigation }) => {
@@ -179,8 +183,12 @@ const AddMemberScreen = ({ navigation }) => {
 
       const { data: newUser } = data;
       dispatch({ type: ADD_MEMBER_TO_GROUP, payload: newUser });
+      dispatch({ type: ADD_MEMBER_TO_AREA, payload: newUser });
+      setPassword("");
+      setPhone("");
+      setEmail("");
 
-      navigation.goBack();
+      navigation.navigate("ManageGroupFlow", { screen: "GroupAdminScreen" });
 
       loading(false);
     } catch (error) {
@@ -194,9 +202,7 @@ const AddMemberScreen = ({ navigation }) => {
   if (_.isEmpty(xAvatars)) return <ActivityIndicator />;
   return (
     <ScrollView>
-      <Text
-        style={h2Style}
-      >{`Add a new member to ${route.params.groupName}`}</Text>
+      <Text style={h2Style}>{`Add a new member to ${xGroup.groupName}`}</Text>
 
       <Text style={h5Style}>Phone Number</Text>
       <Input
@@ -302,6 +308,7 @@ const AddMemberScreen = ({ navigation }) => {
         <Text style={[h5Style, errorStyle]}>{_submitErrorMsg}</Text>
       )}
       <View style={vs30} />
+      <View style={vsKeyboard} />
     </ScrollView>
   );
 };

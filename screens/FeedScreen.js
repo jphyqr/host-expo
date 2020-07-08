@@ -25,10 +25,13 @@ import {
   SET_MEMBER_GROUPS,
   SET_INVITE_GROUPS,
   SET_AREA_GROUPS,
+  SET_MEMBERS_IN_AREA,
+  SET_USER_PHOTOS,
 } from "../constants/reducerConstants";
 import { registerForPushNotifications } from "../services/push_notifications";
 import { Notifications } from "expo";
 import axios from "axios";
+import _ from "lodash";
 import {
   h2Style,
   h6Style,
@@ -36,6 +39,7 @@ import {
   spacedRow,
   column,
   h5Style,
+  hs30,
 } from "../styles/styles";
 const FeedScreen = ({ navigation }) => {
   const auth = useSelector((state) => state.firebase.auth);
@@ -47,6 +51,7 @@ const FeedScreen = ({ navigation }) => {
   const [_games, setGames] = useState([]);
   const [_groups, setGroups] = useState([]);
   const [_groups_invited, setInvitedGroups] = useState([]);
+  const [_profile, setProfile] = useState({});
   const [_member_groups, setMemberGroups] = useState([]);
   const [_host_groups, setHostGroups] = useState([]);
   const xHostGroups = useSelector((state) => state.hostGroups || []);
@@ -75,7 +80,15 @@ const FeedScreen = ({ navigation }) => {
   const games = useSelector((state) => state.firestore.ordered.gamesSnap || []);
 
   useEffect(() => {
-    setNewFeed(profile.newFeed);
+    if (profile.isLoaded) {
+      if (!profile.userHasSetDisplayName) navigation.navigate("ProfileScreen");
+      if (!profile.userHasSetEP) {
+        console.log("User has not set EP");
+        navigation.navigate("ProfileScreen", { screen: "SecurityScreen" });
+      }
+      setProfile(profile);
+      setNewFeed(profile.newFeed);
+    }
   }, [profile]);
 
   useEffect(() => {
@@ -115,10 +128,22 @@ const FeedScreen = ({ navigation }) => {
           feed,
           games_registering,
           groupsInvited,
+          following,
+          other_users_in_area,
+          user_photos,
         } = data || [];
+
+        console.log({ following });
+        console.log({ other_users_in_area });
 
         setGroups(other_groups_in_area);
 
+        dispatch({ type: SET_USER_PHOTOS, payload: user_photos });
+
+        dispatch({
+          type: SET_MEMBERS_IN_AREA,
+          payload: { members: other_users_in_area, following: following },
+        });
         dispatch({ type: SET_HOST_GROUPS, payload: hostGroups });
         dispatch({ type: SET_MEMBER_GROUPS, payload: justMember });
 
@@ -162,7 +187,8 @@ const FeedScreen = ({ navigation }) => {
     setCount(count + 1);
   }, [game_s]);
 
-  if (auth.isEmpty || _loading) return <ActivityIndicator />;
+  if (!auth.isLoaded || !profile.isLoaded || _loading)
+    return <ActivityIndicator />;
 
   return (
     <ScrollView>
@@ -171,7 +197,7 @@ const FeedScreen = ({ navigation }) => {
           <Avatar
             key={"profile"}
             rounded
-            source={{ uri: profile.photoURL }}
+            source={{ uri: _profile.photoURL }}
             size="small"
             showAccessory
             accessory={{
@@ -203,8 +229,6 @@ const FeedScreen = ({ navigation }) => {
                   navigation.navigate("CreateGroupFlow");
                 }}
               />
-
-              <Text style={{ fontSize: 10 }}>Create Group</Text>
             </View>
 
             {_groups_invited?.map((item, i) => {
@@ -243,7 +267,6 @@ const FeedScreen = ({ navigation }) => {
                       navigation.navigate("GroupScoutScreen");
                     }}
                   />
-                  <Text style={{ fontSize: 10 }}>invited</Text>
                 </View>
               );
             })}
@@ -284,7 +307,6 @@ const FeedScreen = ({ navigation }) => {
                       navigation.navigate("ManageGroupFlow");
                     }}
                   />
-                  <Text style={{ fontSize: 10 }}>{item.groupName}</Text>
                 </View>
               );
             })}
@@ -325,10 +347,12 @@ const FeedScreen = ({ navigation }) => {
                       }
                     }}
                   />
-                  <Text style={{ fontSize: 10 }}>{item.groupName}</Text>
                 </View>
               );
             })}
+
+            <View style={hs30}></View>
+            <View style={hs30}></View>
           </ScrollView>
           <Text style={h7Style}>Other groups In Area</Text>
           <ScrollView
@@ -366,14 +390,11 @@ const FeedScreen = ({ navigation }) => {
                       }
                     }}
                   />
-                  <Text
-                    style={{ fontSize: 10, width: "100%", textAlign: "center" }}
-                  >
-                    {item.groupName}
-                  </Text>
                 </View>
               );
             })}
+            <View style={hs30}></View>
+            <View style={hs30}></View>
           </ScrollView>
         </View>
       </View>
@@ -393,7 +414,7 @@ const FeedScreen = ({ navigation }) => {
                 onPress={
                   item.hostUid === auth.uid
                     ? () =>
-                        navigation.navigate("InviteMembersScreen", {
+                        navigation.navigate("CreateGameFlow", {
                           id: item.id,
                         })
                     : () => {
@@ -429,7 +450,7 @@ const FeedScreen = ({ navigation }) => {
               onPress={
                 item.hostUid === auth.uid
                   ? () =>
-                      navigation.navigate("InviteMembersScreen", {
+                      navigation.navigate("CreateGameFlow", {
                         id: item.id,
                       })
                   : () => {

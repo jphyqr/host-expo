@@ -56,6 +56,15 @@ export const h7Style = {
   marginBottom: 2,
 };
 
+export const hs30 = {
+  minWidth: 30,
+  minHeight: 30,
+};
+
+export const vsKeyboard = {
+  minHeight: 250,
+};
+
 export const vs30 = {
   minHeight: 30,
 };

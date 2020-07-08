@@ -61,6 +61,7 @@ import { deleteGroup } from "./actions/gameActions";
 import InviteGroupMembersScreen from "./screens/InviteGroupMembersScreen";
 import GroupScoutScreen from "./screens/GroupScoutScreen";
 import GroupPreviewScreen from "./screens/GroupPreviewScreen";
+import SecurityScreen from "./screens/SecurityScreen";
 const { store, persistor } = configureStore();
 
 const App = () => {
@@ -235,18 +236,6 @@ function WrappedApp({ navigation }) {
     );
   };
 
-  const CreateGame = () => {
-    return (
-      <Stack.Navigator>
-        <Stack.Screen name="CreateGameScreen" component={CreateGameScreen} />
-        <Stack.Screen
-          name="InviteMembersScreen"
-          component={InviteMembersScreen}
-        />
-      </Stack.Navigator>
-    );
-  };
-
   const GroupAdmin = () => {
     return (
       <Drawer.Navigator
@@ -268,6 +257,18 @@ function WrappedApp({ navigation }) {
           component={InviteGroupMembersScreen}
         />
       </Stack.Navigator>
+    );
+  };
+
+  const CreateGameFlow = () => {
+    return (
+      <TopTab.Navigator>
+        <TopTab.Screen name="CreateGameScreen" component={CreateGameScreen} />
+        <TopTab.Screen
+          name="InviteMembersScreen"
+          component={InviteMembersScreen}
+        />
+      </TopTab.Navigator>
     );
   };
 
@@ -293,6 +294,14 @@ function WrappedApp({ navigation }) {
     );
   };
 
+  const ProfileTabs = () => {
+    return (
+      <TopTab.Navigator>
+        <TopTab.Screen name="ProfileScreen" component={ProfileScreen} />
+        <TopTab.Screen name="SecurityScreen" component={SecurityScreen} />
+      </TopTab.Navigator>
+    );
+  };
   const Feed = () => {
     return (
       <Stack.Navigator>
@@ -313,7 +322,7 @@ function WrappedApp({ navigation }) {
 
         <Stack.Screen name="AddMemberScreen" component={AddMemberScreen} />
 
-        <Stack.Screen name="CreateGameScreen" component={CreateGameScreen} />
+        <Stack.Screen name="CreateGameFlow" component={CreateGameFlow} />
         <Stack.Screen
           name="InviteMembersScreen"
           component={InviteMembersScreen}
@@ -336,8 +345,8 @@ function WrappedApp({ navigation }) {
         <Tab.Screen name="AreaScreen" component={AreaScreen} />
 
         <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
+          name="ProfileScreen"
+          component={ProfileTabs}
           options={{ title: "Profile" }}
         />
       </Tab.Navigator>
@@ -346,10 +355,15 @@ function WrappedApp({ navigation }) {
 
   const Drawer = createDrawerNavigator();
 
-  function CustomDrawerContent(props) {
+  function CustomDrawerContent({ navigation, ...props }) {
     return (
       <DrawerContentScrollView {...props}>
         <DrawerItemList {...props} />
+        <DrawerItem
+          label="Edit Profile"
+          onPress={() => navigation.navigate("ProfileScreen")}
+        />
+
         <DrawerItem
           label="Help"
           onPress={() => Linking.openURL("https://privatehost.ca/help")}

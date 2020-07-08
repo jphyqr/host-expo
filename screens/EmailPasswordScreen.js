@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Button,
-  ActivityIndicator,
-  AsyncStorage,
-} from "react-native";
-import { Input } from "react-native-elements";
+import { View, Text, ActivityIndicator, AsyncStorage } from "react-native";
+import { Input, Button } from "react-native-elements";
 import firebase from "../firebase";
 const EmailPasswordScreen = ({ navigation }) => {
   const [_updating, setUpdating] = useState(false);
@@ -62,7 +56,12 @@ const EmailPasswordScreen = ({ navigation }) => {
         onChangeText={(password) => setPassword(password)}
       />
 
-      <Button onPress={handleLogin} title="Login" />
+      <Button
+        onPress={handleLogin}
+        loading={_updating}
+        disabled={!(_password.length > 5 && _email.length > 4)}
+        title="Login"
+      />
     </View>
   );
 };

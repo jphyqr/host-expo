@@ -90,6 +90,18 @@ const CreateGameScreen = ({ route, navigation }) => {
 
   const xGame = useSelector((state) => state.game || {});
 
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener("focus", (e) => {
+  //     // Prevent default behavior
+  //     e.preventDefault();
+  //     console.log("Tab Pressed");
+  //     // Do something manually
+  //     // ...
+  //   });
+
+  //   return unsubscribe;
+  // }, [navigation]);
+
   useEffect(() => {
     const { gameSettings, seating } = xGame || {};
 

@@ -15,6 +15,8 @@ import {
   groupsReducer,
   memberOfGroupReducer,
 } from "./groupsReducer";
+import { membersInAreaReducer } from "./membersInAreaReducer";
+import { userPhotosReducer } from "./userPhotosReducer";
 const rootReducer = combineReducers({
   firestore: firestoreReducer,
   firebase: firebaseReducer,
@@ -28,6 +30,8 @@ const rootReducer = combineReducers({
   areaGroups: areaGroupsReducer,
   inviteGroups: inviteGroupsReducer,
   memberGroups: memberGroupsReducer,
+  membersInArea: membersInAreaReducer,
+  userPhotos: userPhotosReducer,
 });
 
 const config = {

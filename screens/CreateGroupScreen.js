@@ -102,7 +102,8 @@ const CreateGroupScreen = ({ navigation }) => {
         payload: { id: addGroup.id, ...newGroup },
       });
 
-      navigation.navigate("InviteGroupMembersScreen");
+      navigation.goBack();
+      navigation.navigate("ManageGroupFlow");
       loading(false);
     } catch (error) {
       console.log("create group error", error);
