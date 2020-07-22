@@ -87,7 +87,7 @@ const InviteGroupMembersScreen = ({ navigation }) => {
           return (
             <ListItem
               key={i}
-              leftAvatar={{ source: { uri: u.photoURL } }}
+              leftAvatar={{ source: { uri: u?.photoURL } }}
               title={u.displayName}
               subtitle={
                 !_.isEmpty(_group) &&

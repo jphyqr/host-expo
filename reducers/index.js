@@ -2,7 +2,11 @@ import { combineReducers } from "redux";
 import { firestoreReducer } from "redux-firestore";
 import { firebaseReducer } from "react-redux-firebase";
 import { phoneReducer } from "../reducers/phoneReducer";
-import { gameReducer, gamesReducer } from "./gameReducer";
+import {
+  gameReducer,
+  gamesReducer,
+  gameTransactionsReducer,
+} from "./gameReducer";
 import { persistReducer } from "redux-persist";
 import { AsyncStorage } from "react-native";
 import { avatarsReducer } from "./avatarsReducer";
@@ -32,6 +36,7 @@ const rootReducer = combineReducers({
   memberGroups: memberGroupsReducer,
   membersInArea: membersInAreaReducer,
   userPhotos: userPhotosReducer,
+  gameTransactions: gameTransactionsReducer,
 });
 
 const config = {

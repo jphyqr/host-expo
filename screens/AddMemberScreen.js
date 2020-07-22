@@ -31,7 +31,9 @@ const AddMemberScreen = ({ navigation }) => {
   const [_loading, loading] = useState(false);
   const [_phone, setPhone] = useState("");
   const [_email, setEmail] = useState("");
-  const [_avatar, selectAvatar] = useState("");
+  const [_avatar, selectAvatar] = useState(
+    "https://firebasestorage.googleapis.com/v0/b/poker-cf130.appspot.com/o/avatars%2Ffish.png?alt=media&token=6381537c-65b8-4ecd-a952-a3a8579ff883"
+  );
   const [_password, setPassword] = useState("");
   const [_displayName, setDisplayName] = useState("");
   const xGroup = useSelector((state) => state.group || {});
@@ -188,7 +190,7 @@ const AddMemberScreen = ({ navigation }) => {
       setPhone("");
       setEmail("");
 
-      navigation.navigate("ManageGroupFlow", { screen: "GroupAdminScreen" });
+      navigation.goBack();
 
       loading(false);
     } catch (error) {
@@ -238,7 +240,7 @@ const AddMemberScreen = ({ navigation }) => {
           size="medium"
           rounded
           source={{
-            uri: _avatar || "",
+            uri: _avatar,
           }}
         />
       </View>
@@ -262,7 +264,7 @@ const AddMemberScreen = ({ navigation }) => {
                 size="medium"
                 rounded
                 source={{
-                  uri: a.url,
+                  uri: a?.url,
                 }}
               />
             );

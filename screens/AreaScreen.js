@@ -91,7 +91,7 @@ const AreaScreen = () => {
           return (
             <ListItem
               key={i}
-              leftAvatar={{ source: { uri: u.photoURL } }}
+              leftAvatar={{ source: { uri: u?.photoURL } }}
               title={u.displayName}
               subtitle={"subtitle"}
               bottomDivider

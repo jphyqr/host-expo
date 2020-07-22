@@ -23,7 +23,7 @@ const InviteList = ({ group, game }) => {
                   : "Not invited yet"
               }
               leftAvatar={{
-                source: { uri: group.members[`${id}`].photoURL },
+                source: { uri: group.members[`${id}`]?.photoURL },
               }}
               title={group.members[`${id}`].displayName}
               rightIcon={

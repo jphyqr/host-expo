@@ -8,11 +8,15 @@ import {
   Vibration,
   Button,
 } from "react-native";
-
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Provider } from "react-redux";
 import { createFirestoreInstance } from "redux-firestore";
 //import store from "./store";
 import firebase from "./firebase";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+
 import { TabNavigator, StackNavigator } from "react-navigation";
 import { ReactReduxFirebaseProvider } from "react-redux-firebase";
 import WelcomeScreen from "./screens/WelcomeScreen";
@@ -62,6 +66,13 @@ import InviteGroupMembersScreen from "./screens/InviteGroupMembersScreen";
 import GroupScoutScreen from "./screens/GroupScoutScreen";
 import GroupPreviewScreen from "./screens/GroupPreviewScreen";
 import SecurityScreen from "./screens/SecurityScreen";
+import { Icon } from "react-native-elements";
+import GroupsGamesScreen from "./screens/GroupsGamesScreen";
+import GameDetailScreen from "./screens/CreateGame/GameDetailScreen";
+import ManageGameScreen from "./screens/CreateGame/ManageGameScreen";
+import PlayGameScreen from "./screens/CreateGame/PlayGameScreen";
+import GameRunning from "./screens/GameRunning";
+import RegistrationDetails from "./screens/RegistrationDetails";
 const { store, persistor } = configureStore();
 
 const App = () => {
@@ -98,7 +109,8 @@ function WrappedApp({ navigation }) {
   const TopTab = createMaterialTopTabNavigator();
   const firestore = firebase.firestore();
   const dispatch = useDispatch();
-
+  const user = firebase.auth().currentUser;
+  console.log({ user });
   useEffect(() => {
     const checkPermissions = async () => {
       try {
@@ -260,12 +272,150 @@ function WrappedApp({ navigation }) {
     );
   };
 
-  const CreateGameFlow = () => {
+  const LiveGameFlow = ({ route }) => {
+    console.log("live game flow", route);
     return (
-      <TopTab.Navigator>
-        <TopTab.Screen name="CreateGameScreen" component={CreateGameScreen} />
+      <TopTab.Navigator
+        tabBarOptions={{
+          activeTintColor: "#e91e63",
+          labelStyle: { fontSize: 12 },
+          style: { backgroundColor: "powderblue" },
+          showIcon: true,
+        }}
+        initialRouteName={
+          route.params.gameState.includes("RUNNING")
+            ? "Game Running"
+            : "Game Registering"
+        }
+      >
+        {route.params.gameState.includes("RUNNING") ? (
+          <TopTab.Screen
+            options={{
+              tabBarLabel: "Game Running",
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="cards" color={color} size={25} />
+              ),
+            }}
+            name="Game Running"
+            component={GameRunning}
+          />
+        ) : (
+          <TopTab.Screen
+            name="Game Registering"
+            options={{
+              tabBarLabel: `Register for ${route.params.gameName}`,
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons
+                  name="playlist-edit"
+                  color={color}
+                  size={25}
+                />
+              ),
+            }}
+            component={GameScreen}
+          />
+        )}
+
+        {route.params.gameState.includes("REGISTRATION") && (
+          <TopTab.Screen
+            name="Game Info"
+            options={{
+              tabBarLabel: `Game Details`,
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons
+                  name="information"
+                  color={color}
+                  size={25}
+                />
+              ),
+            }}
+            component={RegistrationDetails}
+          />
+        )}
+
+        {route.params.hostUid === firebase.auth().currentUser.uid && (
+          <TopTab.Screen name="Live Host Screen" component={GameScreen} />
+        )}
+      </TopTab.Navigator>
+    );
+  };
+
+  const CreateGameFlow = ({ route }) => {
+    return (
+      <TopTab.Navigator
+        lazy
+        initialRouteName={
+          route.params.gameState.includes("RUNNING")
+            ? "GameRunning"
+            : "CreateGameScreen"
+        }
+        tabBarOptions={{
+          activeTintColor: "#e91e63",
+          labelStyle: { fontSize: 12 },
+          style: { backgroundColor: "powderblue" },
+          showIcon: true,
+        }}
+      >
+        {route.params.gameState.includes("RUNNING") && (
+          <TopTab.Screen
+            name="GameRunning"
+            component={ManagePlayerInGameScreen}
+            options={{
+              tabBarLabel: "Manage",
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons
+                  name="poker-chip"
+                  color={color}
+                  size={25}
+                />
+              ),
+            }}
+          />
+        )}
+        {route.params.isPlaying && route.params.gameState.includes("RUNNING") && (
+          <TopTab.Screen
+            name="Play"
+            component={GameRunning}
+            options={{
+              tabBarLabel: "Play",
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="cards" color={color} size={25} />
+              ),
+            }}
+          />
+        )}
+        <TopTab.Screen
+          name="CreateGameScreen"
+          component={CreateGameScreen}
+          options={{
+            tabBarLabel: "Edit",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons
+                name="calendar-edit"
+                color={color}
+                size={25}
+              />
+            ),
+          }}
+        />
+        <TopTab.Screen
+          name="GameDetailScreen"
+          options={{
+            tabBarLabel: "More",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="more-horiz" color={color} size={25} />
+            ),
+          }}
+          component={GameDetailScreen}
+        />
         <TopTab.Screen
           name="InviteMembersScreen"
+          options={{
+            tabBarLabel: "Invite",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="person-add" color={color} size={25} />
+            ),
+          }}
           component={InviteMembersScreen}
         />
       </TopTab.Navigator>
@@ -274,31 +424,90 @@ function WrappedApp({ navigation }) {
 
   const ManageGroupFlow = () => {
     return (
-      // <Stack.Navigator>
-      //   <Stack.Screen name="GroupAdminScreen" component={GroupAdmin} />
-      //   <Stack.Screen
-      //     name="InviteGroupMembersScreen"
-      //     component={InviteGroupMembersScreen}
-      //   />
-      // </Stack.Navigator>
-
-      <TopTab.Navigator>
-        <TopTab.Screen name="GroupAdminScreen" component={GroupAdmin} />
+      <TopTab.Navigator
+        initialRouteName="GroupsGamesScreen"
+        tabBarOptions={{
+          activeTintColor: "#e91e63",
+          labelStyle: { fontSize: 12 },
+          style: { backgroundColor: "powderblue" },
+          showIcon: true,
+        }}
+      >
         <TopTab.Screen
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="cards" color={color} size={25} />
+            ),
+
+            tabBarLabel: "Games",
+          }}
+          name="GroupsGamesScreen"
+          component={GroupsGamesScreen}
+        />
+
+        <TopTab.Screen
+          options={{
+            tabBarLabel: "Group",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons
+                name="account-group"
+                color={color}
+                size={25}
+              />
+            ),
+          }}
+          name="GroupAdminScreen"
+          component={GroupAdmin}
+        />
+        <TopTab.Screen
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons
+                name="account-search"
+                color={color}
+                size={25}
+              />
+            ),
+            tabBarLabel: "Invite",
+          }}
           name="InviteGroupMembersScreen"
           component={InviteGroupMembersScreen}
         />
 
-        <TopTab.Screen name="AddMemberScreen" component={AddMemberScreen} />
+        <TopTab.Screen
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="group-add" color={color} size={25} />
+            ),
+            tabBarLabel: "Add",
+          }}
+          name="AddMemberScreen"
+          component={AddMemberScreen}
+        />
       </TopTab.Navigator>
     );
   };
 
   const ProfileTabs = () => {
     return (
-      <TopTab.Navigator>
-        <TopTab.Screen name="ProfileScreen" component={ProfileScreen} />
-        <TopTab.Screen name="SecurityScreen" component={SecurityScreen} />
+      <TopTab.Navigator
+        initialRouteName="ProfileScreen"
+        tabBarOptions={{
+          activeTintColor: "#e91e63",
+          labelStyle: { fontSize: 12 },
+          style: { marginTop: 20 },
+        }}
+      >
+        <TopTab.Screen
+          options={{ tabBarLabel: "Profile" }}
+          name="ProfileScreen"
+          component={ProfileScreen}
+        />
+        <TopTab.Screen
+          options={{ tabBarLabel: "Account" }}
+          name="SecurityScreen"
+          component={SecurityScreen}
+        />
       </TopTab.Navigator>
     );
   };
@@ -306,7 +515,7 @@ function WrappedApp({ navigation }) {
     return (
       <Stack.Navigator>
         <Stack.Screen name="FeedScreen" component={FeedScreen} />
-        <Stack.Screen name="GameScreen" component={GameScreen} />
+        <Stack.Screen name="GameScreen" component={LiveGameFlow} />
         <Stack.Screen name="GroupScoutScreen" component={GroupScoutScreen} />
 
         <Stack.Screen
@@ -339,7 +548,28 @@ function WrappedApp({ navigation }) {
 
   const MainClosed = () => {
     return (
-      <Tab.Navigator>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
+
+            if (route.name === "Feed") {
+              iconName = focused ? "ios-home" : "ios-home";
+            } else if (route.name === "AreaScreen") {
+              iconName = focused ? "ios-people" : "ios-people";
+            } else if (route.name === "ProfileScreen") {
+              iconName = focused ? "ios-settings" : "ios-settings";
+            }
+
+            // You can return any component that you like here!
+            return <Ionicons name={iconName} size={size} color={color} />;
+          },
+        })}
+        tabBarOptions={{
+          activeTintColor: "tomato",
+          inactiveTintColor: "gray",
+        }}
+      >
         <Tab.Screen name="Feed" component={Feed} />
 
         <Tab.Screen name="AreaScreen" component={AreaScreen} />
@@ -395,6 +625,7 @@ function WrappedApp({ navigation }) {
     return (
       <Drawer.Navigator
         initialRouteName="Main"
+        openByDefault={false}
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
         <Drawer.Screen name="Main" component={MainClosed} />

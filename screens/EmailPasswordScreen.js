@@ -26,7 +26,6 @@ const EmailPasswordScreen = ({ navigation }) => {
     setUpdating(true);
     AsyncStorage.setItem("email", _email);
     try {
-      setUpdating(false);
       await firebase.auth().signInWithEmailAndPassword(_email, _password);
 
       navigation.navigate("Main");

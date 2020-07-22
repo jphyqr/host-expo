@@ -25,6 +25,25 @@ export const h4Style = {
   marginBottom: 5,
 };
 
+export const hybridText = {
+  fontSize: 18,
+  color: "blue",
+  fontWeight: "600",
+  marginTop: 5,
+  marginBottom: 5,
+  backgroundColor: "gainsboro",
+  padding: 10,
+
+  fontStyle: "italic",
+};
+export const hybridView = {
+  border: "1px solid blue",
+};
+
+export const selectedListItem = {
+  backgroundColor: "lightblue",
+};
+
 export const h5Style = {
   fontSize: 16,
   color: "blue",
@@ -44,8 +63,8 @@ export const h6Style = {
   fontSize: 10,
   color: "grey",
   fontWeight: "bold",
-  marginTop: 5,
-  marginBottom: 5,
+  marginTop: 2,
+  marginBottom: 2,
 };
 
 export const h7Style = {
@@ -53,6 +72,14 @@ export const h7Style = {
   color: "grey",
   fontStyle: "italic",
   marginTop: 0,
+  marginBottom: 2,
+};
+
+export const moneyText = {
+  fontSize: 16,
+  color: "green",
+  fontWeight: "600",
+  marginTop: 2,
   marginBottom: 2,
 };
 
@@ -84,6 +111,7 @@ export const spacedRow = {
   justifyContent: "space-between",
   width: "100%",
   alignItems: "center",
+  flexWrap: "wrap",
 };
 
 export const averageRow = {

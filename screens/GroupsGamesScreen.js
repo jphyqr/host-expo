@@ -26,7 +26,7 @@ import {
   spacedRow,
 } from "../styles/styles";
 import { SET_GAME, DELETE_HOST_GROUP } from "../constants/reducerConstants";
-const GroupAdminScreen = ({ navigation }) => {
+const GroupsGamesScreen = ({ navigation }) => {
   const xGroup = useSelector((state) => state.group || {});
   const [_group, setGroup] = useState({});
   const firestore = firebase.firestore();
@@ -35,40 +35,6 @@ const GroupAdminScreen = ({ navigation }) => {
   const [_deleting, deleting] = useState(false);
   const [_fU, fU] = useState(0);
   const dispatch = useDispatch();
-
-  const handleDeleteGroup = async () => {
-    Alert.alert(
-      "Delete Group",
-      "This will delete all games, and stats for goroup.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete Group",
-          onPress: async () => {
-            try {
-              deleting(true);
-
-              await dispatch(deleteGroup({ firestore }, _group.id));
-              dispatch({
-                type: DELETE_HOST_GROUP,
-                payload: { id: `${_group.id}_${auth.uid}` },
-              });
-              console.log("should navigate to main");
-              navigation.goBack();
-              deleting(false);
-            } catch (error) {
-              console.log({ error });
-              deleting(false);
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
-  };
 
   const handleCreateGameClick = async () => {
     loading(true);
@@ -116,77 +82,6 @@ const GroupAdminScreen = ({ navigation }) => {
 
   return (
     <ScrollView>
-      <View style={spacedRow}>
-        <Text style={h2Style}>{_group.name}</Text>
-
-        <Avatar
-          key={"groupAvatar"}
-          rounded
-          source={{ uri: _group?.photoURL }}
-          size="medium"
-          onPress={() => {
-            navigation.openDrawer();
-          }}
-        />
-      </View>
-
-      {!_.isEmpty(_group?.pending) && (
-        <View>
-          <View style={vs30} />
-          <Text style={h5Style}>Pending</Text>
-          <View>
-            {Object.keys(_group?.pending).map((g, i) => {
-              return (
-                <ListItem
-                  key={i}
-                  title={_group?.pending[`${g}`].displayName}
-                  subtitle={_group?.pending[`${g}`].message}
-                  leftAvatar={{
-                    source: { uri: _group?.pending[`${g}`].photoURL },
-                  }}
-                  onPress={() =>
-                    navigation.navigate("GroupMemberScreen", {
-                      user: _group?.pending[`${g}`],
-                      id: g,
-                      pending: true,
-                    })
-                  }
-                  chevron
-                />
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {!_.isEmpty(_group?.members) && (
-        <View>
-          <View style={vs10} />
-          {!_.isEmpty(_group?.members) && <Text syle={h4Style}>Members</Text>}
-          {Object.keys(_group?.members)
-            ?.filter((id) => id !== auth.uid)
-            .map((g, i) => {
-              return (
-                <ListItem
-                  key={i}
-                  title={_group?.members[`${g}`].displayName}
-                  chevron
-                  leftAvatar={{
-                    source: { uri: _group?.members[`${g}`].photoURL },
-                  }}
-                  onPress={() =>
-                    navigation.navigate("GroupMemberScreen", {
-                      user: _group?.members[`${g}`],
-                      id: g,
-                      pending: false,
-                    })
-                  }
-                />
-              );
-            })}
-        </View>
-      )}
-
       <View style={vs30} />
       <Text style={h3Style}>Groups Games</Text>
 
@@ -200,8 +95,11 @@ const GroupAdminScreen = ({ navigation }) => {
                   type: SET_GAME,
                   payload: g,
                 });
-                navigation.navigate("CreateGameScreen", {
-                  id: g.id,
+                navigation.navigate("CreateGameFlow", {
+                  hostUid: g.hostUid,
+                  gameState: g.gameState,
+                  isPlaying:
+                    g.seating.filter((s) => s.uid === auth.uid).length > 0,
                 });
               }}
             >
@@ -239,4 +137,4 @@ const GroupAdminScreen = ({ navigation }) => {
   );
 };
 
-export default GroupAdminScreen;
+export default GroupsGamesScreen;

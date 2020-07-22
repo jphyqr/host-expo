@@ -136,7 +136,7 @@ const GroupScoutScreen = ({ navigation }) => {
           <ListItem
             style={{ width: "100%" }}
             key={i}
-            leftAvatar={{ source: { uri: members[`${m}`].photoURL } }}
+            leftAvatar={{ source: { uri: members[`${m}`]?.photoURL } }}
             title={members[`${m}`].displayName}
           />
         );

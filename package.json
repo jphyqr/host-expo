@@ -8,6 +8,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@expo/vector-icons": "^10.2.0",
     "@react-native-community/async-storage": "^1.11.0",
     "@react-native-community/datetimepicker": "^2.4.3",
     "@react-native-community/masked-view": "^0.1.10",
@@ -32,6 +33,7 @@
     "react-native-gesture-handler": "^1.6.1",
     "react-native-google-places-autocomplete": "^1.7.2",
     "react-native-image-picker": "^2.3.1",
+    "react-native-multi-select-picker": "^1.0.11",
     "react-native-picker-select": "^7.0.0",
     "react-native-reanimated": "^1.9.0",
     "react-native-safe-area-context": "0.7.3",
@@ -39,6 +41,7 @@
     "react-native-screens": "^2.9.0",
     "react-native-tab-view": "^2.14.4",
     "react-native-unimodules": "^0.10.1",
+    "react-native-vector-icons": "^7.0.0",
     "react-native-web": "~0.11.7",
     "react-navigation": "^4.3.9",
     "react-redux": "^7.2.0",

@@ -47,7 +47,7 @@ const GroupMemberScreen = ({ route, navigation }) => {
     <View>
       <ListItem
         key={"userItem"}
-        leftAvatar={{ source: { uri: user.photoURL } }}
+        leftAvatar={{ source: { uri: user?.photoURL } }}
         title={user.displayName}
         subtitle={"subtitle"}
         bottomDivider

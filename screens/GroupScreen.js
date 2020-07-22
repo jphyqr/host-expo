@@ -156,7 +156,7 @@ const GroupScreen = ({ navigation }) => {
           <ListItem
             key={i}
             leftAvatar={{
-              source: { uri: g.photoURL },
+              source: { uri: g?.photoURL },
             }}
             title={g.displayName}
             subtitle={g.rankScore}

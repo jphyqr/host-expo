@@ -1,29 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Alert } from "react-native";
+import { Overlay, Input, Button, Icon } from "react-native-elements";
 import firebase from "../firebase";
-import { useSelector } from "react-redux/lib/hooks/useSelector";
-import { Avatar, Input, Button, Icon } from "react-native-elements";
-import { ScrollView } from "react-native-gesture-handler";
-import { useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { h5Style, vs30, errorStyle } from "../styles/styles";
 import _ from "lodash";
-import * as ImagePicker from "expo-image-picker";
-import {
-  vs30,
-  h5Style,
-  vsKeyboard,
-  spacedRow,
-  averageRow,
-  errorStyle,
-} from "../styles/styles";
-import { uploadUserDisplayPhoto } from "../actions/userActions";
-import { useFirestoreConnect } from "react-redux-firebase";
-const SecurityScreen = ({ navigation }) => {
+const EmailPassword = ({ onOkay }) => {
+  const firestore = firebase.firestore();
+  const dispatch = useDispatch();
   const profile = useSelector((state) => state.firebase.profile || {});
   const auth = useSelector((state) => state.firebase.auth || {});
-
-  const firestore = firebase.firestore();
-
-  const dispatch = useDispatch();
 
   const [_fU, fU] = useState(1);
   const [_updatingEP, updatingEP] = useState(false);
@@ -49,19 +35,6 @@ const SecurityScreen = ({ navigation }) => {
       setEmail(auth.email);
     }
   }, [auth]);
-
-  //   useEffect(() => {
-  //     if (!_.isEmpty(profile)) {
-  //       if (!profile.userHasSetEP) {
-  //         Alert.alert(
-  //           "Set Username and Password",
-  //           "Add an e-mail and password for account recovery and easier login",
-  //           [{ text: "Skip E/P" }, { text: "OK" }],
-  //           { cancelable: false }
-  //         );
-  //       }
-  //     }
-  //   }, [profile]);
 
   const checkIfEmailExists = async (email) => {
     const ROOT_URL = "https://us-central1-poker-cf130.cloudfunctions.net";
@@ -134,12 +107,12 @@ const SecurityScreen = ({ navigation }) => {
       if (!_emailSet) {
         await user.updateEmail(_email);
         await user.sendEmailVerification();
-
-        await firestore.collection("users").doc(auth.uid).update({
-          userHasSetEP: true,
-        });
       }
       await user.updatePassword(_password);
+
+      await firestore.collection("users").doc(auth.uid).update({
+        userHasSetEP: true,
+      });
 
       setEmailSet(true);
 
@@ -150,9 +123,7 @@ const SecurityScreen = ({ navigation }) => {
           [
             {
               text: "OK",
-              onPress: () => {
-                navigation.navigate("Feed");
-              },
+              onPress: () => onOkay(),
             },
           ],
           { cancelable: false }
@@ -164,10 +135,7 @@ const SecurityScreen = ({ navigation }) => {
           [
             {
               text: "OK",
-              onPress: () => {
-                navigation.goBack();
-                navigation.navigate("Main");
-              },
+              onPress: () => onOkay(),
             },
           ],
           { cancelable: false }
@@ -184,21 +152,7 @@ const SecurityScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView>
-      <View style={vs30} />
-      <Avatar
-        key={"profile"}
-        rounded
-        source={{ uri: profile.photoURL }}
-        size="small"
-        overlayContainerStyle={{ backgroundColor: "blue" }}
-        onPress={() => {
-          navigation.openDrawer();
-        }}
-      />
-
-      <View style={vs30} />
-
+    <Overlay>
       <View>
         <Text style={h5Style}>Email</Text>
 
@@ -236,28 +190,27 @@ const SecurityScreen = ({ navigation }) => {
           errorMessage={_confirmError ? _confirmErrorMsg : ""}
         />
 
-        <View>
-          <Button
-            disabled={
-              !(
-                _email?.length > 3 &&
-                _password?.length > 5 &&
-                _password?.length === _confirm?.length
-              )
-            }
-            title={_emailSet ? "Update Password" : "Update E-mail/Password"}
-            onPress={handleSubmit}
-            loading={_updatingEP}
-          />
-          {_submitError && (
-            <Text style={[h5Style, errorStyle]}>{_submitErrorMsg}</Text>
-          )}
-        </View>
-      </View>
+        <Button
+          disabled={
+            !(
+              _email?.length > 3 &&
+              _password?.length > 5 &&
+              _password?.length === _confirm?.length
+            )
+          }
+          title={_emailSet ? "Update Password" : "Update E-mail/Password"}
+          onPress={handleSubmit}
+          loading={_updatingEP}
+        />
+        {_submitError && (
+          <Text style={[h5Style, errorStyle]}>{_submitErrorMsg}</Text>
+        )}
 
-      <View style={vsKeyboard} />
-    </ScrollView>
+        <View style={vs30} />
+        <Button title="Later" onPress={onOkay} type="outline" />
+      </View>
+    </Overlay>
   );
 };
 
-export default SecurityScreen;
+export default EmailPassword;

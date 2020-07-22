@@ -32,8 +32,8 @@ export const deleteGame = ({ firestore }, id) => {
       batch.delete(gameRef);
 
       await batch.commit();
-      dispatch({ type: DELETE_GAME, payload: { id: newGame.id, ...newGame } });
-
+      dispatch({ type: DELETE_GAME, payload: { id: id } });
+      dispatch({ type: SET_GAME, payload: {} });
       return;
     } catch (error) {
       console.log("Error deleting", error);
@@ -89,7 +89,7 @@ export const createGame = ({ firestore }, navigation, group, groupId) => {
         members: {
           [group.hostUid]: {
             joinDate: Date.now(),
-            photoURL: group.hostPhotoUR || "/assets/user.png",
+            photoURL: group.hostPhotoURL || "/assets/user.png",
             displayName: group.hostedBy,
             host: true,
           },
@@ -118,7 +118,11 @@ export const createGame = ({ firestore }, navigation, group, groupId) => {
 
       dispatch({ type: SET_GAME, payload: newGame });
 
-      navigation.navigate("CreateGameFlow");
+      navigation.navigate("CreateGameFlow", {
+        hostUid: group.hostUid,
+        gameState: newGame.gameState,
+        isPlaying: false,
+      });
 
       dispatch({ type: CREATE_GAME, payload: { id: newGame.id, ...newGame } });
 

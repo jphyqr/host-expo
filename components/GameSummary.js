@@ -20,7 +20,7 @@ const GameSummary = ({ game }) => {
     let string = "";
 
     for (const item of list) {
-      string = string + item + ", ";
+      string = string + item.value + ", ";
     }
     return string.substring(0, string.length - 2);
   };

@@ -1,6 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Alert, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  View,
+  Text,
+  Alert,
+  Button as BoringButton,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
 import firebase from "../../firebase";
+import { MultipleSelectPicker } from "react-native-multi-select-picker";
+
 import {
   h2Style,
   h4Style,
@@ -10,6 +19,9 @@ import {
   h5Style,
   h6Style,
   vs30,
+  hybridText,
+  hybridView,
+  vs10,
 } from "../../styles/styles";
 import {
   Input,
@@ -18,6 +30,8 @@ import {
   CheckBox,
   Slider,
 } from "react-native-elements";
+import RNPickerSelect from "react-native-picker-select";
+
 import { deleteGame } from "../../actions/gameActions";
 import { useDispatch } from "react-redux/lib/hooks/useDispatch";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -25,29 +39,12 @@ import { TouchableOpacity, ScrollView } from "react-native-gesture-handler";
 import { format, parse } from "date-fns";
 import { useSelector } from "react-redux";
 import _ from "lodash";
-import { SET_GAME } from "../../constants/reducerConstants";
+import { SET_GAME, UPDATE_GAME_S } from "../../constants/reducerConstants";
 const gameOptions = ["NLH", "PLO", "DC"];
 
 const straddleOptions = ["UTG", "BTN", "ROCK", "SLEEPER"];
 
 const stakeOptions = ["1-2", "2-5", "5-5", "5-5-10", "5-10", "10-25"];
-
-const smokingOptions = ["At Table", "Inside", "Outside", "None"];
-
-const drinkingOptionsProvided = [
-  "Water",
-  "Coffee",
-  "Pop",
-  "Beer",
-  "Cocktails",
-  "Wine",
-];
-
-const venueOptions = ["Casino", "Hotel", "House", "Condo", "Club", "Business"];
-
-const dealerOptions = ["Professional", "Ameture", "None"];
-
-const drinkingOptionsAvailable = ["Beer", "Cocktails", "Wine"];
 
 const getArrayOfValues = (values, indexes) => {
   let arraOfValues = [];
@@ -55,7 +52,7 @@ const getArrayOfValues = (values, indexes) => {
   for (const i of indexes) {
     arraOfValues.push(values[`${i}`]);
   }
-
+  console.log({ arraOfValues });
   return arraOfValues;
 };
 
@@ -71,13 +68,8 @@ const getArrayOfIndexes = (values, selectedValues) => {
 const CreateGameScreen = ({ route, navigation }) => {
   const [_title, setTitle] = useState("");
   const [_straddleIndexes, straddleIndexes] = useState([]);
-
-  const [_drinkingOptionsProvided, setDrinkingOptionsProvided] = useState([]);
-  const [_drinkingOptionsAvailable, setDrinkingOptionsAvailable] = useState([]);
-  const [_smokingOption, setSmokingOption] = useState(-1);
-  const [_venueOption, setVenueOption] = useState(-1);
-  const [_dealerOption, setDealerOption] = useState(-1);
-  const [_seats, setSeats] = useState(0);
+  const [_showStraddlePicker, setShowStraddlePicker] = useState(false);
+  const [_seats, setSeats] = useState({});
   const [_gameSelectedIndex, selectGameIndex] = useState(-1);
   const [_stakeOptionIndex, selectStakeOption] = useState(-1);
   const [_game, setGame] = useState({});
@@ -87,7 +79,7 @@ const CreateGameScreen = ({ route, navigation }) => {
   const firestore = firebase.firestore();
   const [_loading, loading] = useState(true);
   const dispatch = useDispatch();
-
+  const [_gameState, setGameState] = useState({});
   const xGame = useSelector((state) => state.game || {});
 
   // useEffect(() => {
@@ -103,72 +95,200 @@ const CreateGameScreen = ({ route, navigation }) => {
   // }, [navigation]);
 
   useEffect(() => {
-    const { gameSettings, seating } = xGame || {};
+    if (!_.isEmpty(xGame)) {
+      loading(true);
+      const { gameSettings, gameState } = xGame || {};
+      const { seating } = xGame || [];
 
-    const {
-      dealer,
-      description,
-      drinksAvailable,
-      drinksProvided,
-      game,
-      title,
-      smoking,
-      stakes,
-      venue,
-      straddles,
-      venueOpenTime,
-    } = gameSettings;
+      const {
+        game,
+        title,
 
-    setTitle(title);
+        stakes,
 
-    straddleIndexes(getArrayOfIndexes(straddleOptions, straddles));
-    selectGameIndex(gameOptions.indexOf(game));
-    setDrinkingOptionsAvailable(
-      getArrayOfIndexes(drinkingOptionsAvailable, drinksAvailable)
-    );
-    setDrinkingOptionsProvided(
-      getArrayOfIndexes(drinkingOptionsProvided, drinksProvided)
-    );
-    selectStakeOption(stakeOptions.indexOf(stakes));
-    setSmokingOption(smokingOptions.indexOf(smoking));
-    setVenueOption(venueOptions.indexOf(venue));
-    setDealerOption(dealerOptions.indexOf(dealer));
+        venueOpenTime,
+      } = gameSettings || {};
 
-    setVenueOpenTime(parse(venueOpenTime, "PPPPp", new Date()));
-    setSeats(seating.length);
-    loading(false);
+      if (_.isEmpty(seating)) {
+        console.log("SEATING IS EMPTY");
+      }
+
+      setTitle(title);
+      const { straddles } = gameSettings || [];
+
+      straddleIndexes(straddles);
+
+      setGame(game);
+
+      console.log("game state loaded", gameState);
+
+      setGameState(gameState);
+      selectStakeOption(stakes);
+
+      setVenueOpenTime(
+        venueOpenTime && parse(venueOpenTime, "PPPPp", new Date())
+      );
+      setSeats(seating?.length);
+      loading(false);
+    }
   }, [xGame]);
+
+  //1) should set xGame onto _game, and display _game data on UI
+  //As user changes state, should update firestore and store
+
+  const saveGameSettings = async (key, value) => {
+    let updatedGameSettings = xGame.gameSettings || {};
+
+    updatedGameSettings[`${key}`] = value;
+
+    await firestore
+      .collection("games")
+      .doc(xGame.id)
+      .update({ gameSettings: updatedGameSettings });
+
+    let updatedGame = { ...xGame };
+
+    updatedGame.settings = updatedGameSettings;
+
+    dispatch({ type: SET_GAME, payload: updatedGame });
+  };
+
+  const didMountRef = useRef(false);
+  const titleRef = useRef(false);
+  const gameRef = useRef(false);
+  const stakeRef = useRef(false);
+  const straddleRef = useRef(false);
+  const seatRef = useRef(false);
+  const gameStateRef = useRef(false);
+
+  useEffect(() => {
+    const updateSeating = async () => {
+      console.log("SEATING CHANGED");
+      let updatedGame = { ...xGame };
+
+      let updatedSeating = [];
+
+      for (var i = 0; i < _seats; i++) {
+        updatedSeating.push({ taken: false, seatName: `Seat ${i + 1}` });
+      }
+      updatedGame.seating = updatedSeating;
+
+      try {
+        await firestore
+          .collection("games")
+          .doc(xGame.id)
+          .update({ seating: updatedSeating });
+      } catch (error) {
+        console.log("Error updating seating", error);
+      }
+
+      disptach({ type: SET_GAME, payload: { updatedGame } });
+    };
+    console.log("_seats changed");
+    // if (seatRef.current && _seats !== xGame?.seating?.length) updateSeating();
+    // else seatRef.current = true;
+  }, [_seats]);
+
+  useEffect(() => {
+    const updateGameState = async () => {
+      await firestore
+        .collection("games")
+        .doc(xGame.id)
+        .update({ gameState: _gameState });
+
+      let updatedGame = { ...xGame };
+
+      updatedGame.gameState = _gameState;
+
+      dispatch({ type: SET_GAME, payload: updatedGame });
+      dispatch({ type: UPDATE_GAME_S, payload: updatedGame });
+    };
+
+    if (gameStateRef.current) updateGameState();
+    else gameStateRef.current = true;
+  }, [_gameState]);
+
+  useEffect(() => {
+    const updateStraddles = async () => {
+      await saveGameSettings("straddles", _straddleIndexes);
+    };
+
+    if (straddleRef.current) updateStraddles();
+    else straddleRef.current = true;
+  }, [_straddleIndexes]);
+
+  useEffect(() => {
+    const updateStakes = async () => {
+      await saveGameSettings("stakes", _stakeOptionIndex);
+    };
+
+    if (stakeRef.current) updateStakes();
+    else stakeRef.current = true;
+  }, [_stakeOptionIndex]);
+
+  useEffect(() => {
+    const updateTitle = async () => {
+      await saveGameSettings("title", _title);
+    };
+
+    if (titleRef.current) updateTitle();
+    else titleRef.current = true;
+  }, [_title]);
+
+  useEffect(() => {
+    const updateGame = async () => {
+      await saveGameSettings("game", _game);
+    };
+    if (gameRef.current) updateGame();
+    else gameRef.current = true;
+  }, [_game]);
+
+  useEffect(() => {
+    const updateVenueOpenTime = async () => {
+      console.log([_venueOpenTime]);
+      let updatedGame = { ...xGame };
+      let updatedGameSettings = xGame.gameSettings || {};
+
+      updatedGameSettings.venueOpenTime = format(_venueOpenTime, "PPPPp");
+      await firestore
+        .collection("games")
+        .doc(xGame.id)
+        .update({ gameSettings: updatedGameSettings });
+
+      // let parsedSettings = updatedGameSettings;
+      // parsedSettings.venueOpenTime = parse(
+      //   updatedGameSettings.venueOpenTime,
+      //   "PPPPp",
+      //   new Date()
+      // );
+      // let updatedGame = { ...xGame };
+      // updatedGame.gameSettings = parsedSettings;
+
+      // dispatch({ type: SET_GAME, payload: updatedGame });
+      updatedGame.gameSettings = updatedGameSettings;
+      dispatch({ type: UPDATE_GAME_S, payload: updatedGame });
+    };
+
+    if (didMountRef.current) updateVenueOpenTime();
+    else didMountRef.current = true;
+  }, [_venueOpenTime]);
 
   const saveGame = async () => {
     loading(true);
 
-    console.log("save game");
     let updatedGameSettings = {
       title: _title,
       venueOpenTime: format(_venueOpenTime, "PPPPp"),
       game: gameOptions[_gameSelectedIndex],
       stakes: stakeOptions[_stakeOptionIndex],
       straddles: getArrayOfValues(straddleOptions, _straddleIndexes),
-      venue: venueOptions[_venueOption],
-      dealer: dealerOptions[_dealerOption],
-      smoking: smokingOptions[_smokingOption],
-      drinksProvided: getArrayOfValues(
-        drinkingOptionsProvided,
-        _drinkingOptionsProvided
-      ),
-      drinksAvailable: getArrayOfValues(
-        drinkingOptionsAvailable,
-        _drinkingOptionsAvailable
-      ),
     };
 
     let updatedSeating = [];
 
     for (var i = 0; i < _seats; i++) {
-      updatedSeating.push({ available: true, seatName: `Seat ${i + 1}` });
+      updatedSeating.push({ taken: false, seatName: `Seat ${i + 1}` });
     }
-
-    console.log("save game 2");
 
     try {
       await firestore
@@ -178,14 +298,12 @@ const CreateGameScreen = ({ route, navigation }) => {
 
       let updatedGame = { ...xGame };
 
-      console.log("save game 3");
       updatedGame["seating"] = updatedSeating;
-      console.log("save game 4");
+
       updatedGame["gameSettings"] = updatedGameSettings;
-      console.log("save game 5");
-      console.log("id", updatedGame.id);
+
       dispatch({ type: SET_GAME, payload: updatedGame });
-      console.log("navigating...");
+      dispatch({ type: UPDATE_GAME_S, payload: updatedGame });
       loading(false);
       navigation.navigate("InviteMembersScreen");
     } catch (error) {
@@ -198,9 +316,9 @@ const CreateGameScreen = ({ route, navigation }) => {
     loading(true);
     console.log("DELETE HANDLE");
     try {
-      await dispatch(deleteGame({ firestore }, route.params.id));
+      await dispatch(deleteGame({ firestore }, xGame.id));
       loading(false);
-      navigation.navigate("GroupAdminScreen", { id: route.params.id });
+      navigation.navigate("ManageGroupFlow", { screen: "GroupAdminScreen" });
     } catch (error) {
       console.log({ error });
       // Alert.alert("Error Creating Game", error);
@@ -214,7 +332,7 @@ const CreateGameScreen = ({ route, navigation }) => {
     items.map((item, i) => {
       buttons.push({
         element: () => (
-          <Button
+          <BoringButton
             key={i}
             title={item}
             onPress={async () => await toggleIndex(arr, fn, i, updateKey)}
@@ -237,23 +355,26 @@ const CreateGameScreen = ({ route, navigation }) => {
     fn(updatedArr);
   };
 
+  const renderOptionString = (title, arr) => {
+    let string = `${title}:`;
+
+    for (const item of arr) {
+      string = string + " " + item.value;
+    }
+
+    if (arr.length === 0) string = string + "none";
+
+    return string;
+  };
+
   if (_loading || _.isEmpty(xGame)) return <ActivityIndicator />;
   return (
     <ScrollView>
       <View style={spacedRow}>
         <Button
-          title="Invite Members"
-          icon={{
-            name: "add",
-            size: 15,
-            color: "white",
-          }}
-          raised
-          onPress={saveGame}
-        />
-        <Button
           type="outline"
           title="Delete Game"
+          loading={_loading}
           onPress={() =>
             Alert.alert(
               "Delete Game",
@@ -269,31 +390,38 @@ const CreateGameScreen = ({ route, navigation }) => {
             )
           }
         />
+
+        <RNPickerSelect
+          style={pickerSelectStyles}
+          value={_gameState}
+          onValueChange={(value) => setGameState(value)}
+          items={[
+            { label: "PRIVATE_REGISTRATION", value: "PRIVATE_REGISTRATION" },
+            { label: "OPEN_REGISTRATION", value: "OPEN_REGISTRATION" },
+            { label: "GAME_RUNNING_OPEN", value: "GAME_RUNNING_OPEN" },
+            { label: "GAME_RUNNING_HIDDEN", value: "GAME_RUNNING_HIDDEN" },
+            { label: "CLOSED", value: "CLOSED" },
+          ]}
+        />
       </View>
 
-      <View style={vs30} />
+      <View style={vs10} />
 
-      <Text style={h4Style}>Game Title</Text>
+      <Text style={h5Style}>Game Title</Text>
 
       <Input value={_title} onChangeText={(n) => setTitle(n)} />
 
       <View style={vs30} />
       <View style={spacedRow}>
-        <Button
-          title={_showVenueOpenDay ? "Close" : "Set Date"}
-          onPress={() => {
-            showVenueOpenTime(false);
-            showVenueOpenDay(!_showVenueOpenDay);
-          }}
-        />
-
-        <Button
-          title={_showVenueOpenTime ? "Close" : "Set Time"}
-          onPress={() => {
-            showVenueOpenDay(false);
-            showVenueOpenTime(!_showVenueOpenTime);
-          }}
-        />
+        {(_showVenueOpenDay || _showVenueOpenTime) && (
+          <Button
+            title={"Close"}
+            onPress={() => {
+              showVenueOpenDay(false);
+              showVenueOpenTime(false);
+            }}
+          />
+        )}
       </View>
       {_showVenueOpenDay && (
         <View>
@@ -304,6 +432,7 @@ const CreateGameScreen = ({ route, navigation }) => {
             is24Hour={false}
             display="default"
             onChange={(e, d) => setVenueOpenTime(d)}
+            minimumDate={new Date(Date.now())}
           />
         </View>
       )}
@@ -317,114 +446,139 @@ const CreateGameScreen = ({ route, navigation }) => {
             is24Hour={false}
             display="default"
             onChange={(e, d) => setVenueOpenTime(d)}
+            minimumDate={new Date(Date.now())}
           />
         </View>
       )}
+      <View style={spacedRow}>
+        <TouchableOpacity
+          onPress={() => {
+            showVenueOpenTime(false);
+            showVenueOpenDay(true);
+          }}
+        >
+          <View style={hybridView}>
+            <Text style={hybridText}>{format(_venueOpenTime, "PPPP")}</Text>
+          </View>
+        </TouchableOpacity>
 
-      <View style={centeredRow}>
-        <Text style={h5Style}>{format(_venueOpenTime, "PPPPp")}</Text>
+        <TouchableOpacity
+          onPress={() => {
+            showVenueOpenTime(true);
+            showVenueOpenDay(false);
+          }}
+        >
+          <Text style={hybridText}>{format(_venueOpenTime, "p")}</Text>
+        </TouchableOpacity>
       </View>
 
-      <Text style={h3Style}>Game Options</Text>
-
-      <Text style={h4Style}>Games</Text>
-
-      <ButtonGroup
-        buttons={gameOptions}
-        selectedIndex={_gameSelectedIndex}
-        onPress={(index) => selectGameIndex(index)}
-      />
-
-      <Text style={h4Style}>Stakes</Text>
-
-      <ButtonGroup
-        buttons={stakeOptions}
-        selectedIndex={_stakeOptionIndex}
-        onPress={(index) => selectStakeOption(index)}
-      />
-
-      <Text style={h4Style}>Straddles</Text>
-
-      <ButtonGroup
-        buttons={renderStraddleButtons(
-          straddleOptions,
-          _straddleIndexes,
-          straddleIndexes,
-          "straddleOptions"
-        )}
-        selectMultiple
-        selectedIndexes={_straddleIndexes}
-      />
       <View style={vs30} />
-      <Text style={h5Style}>Seats: {_seats}</Text>
+      <View style={spacedRow}>
+        <Text style={h5Style}>Games</Text>
 
-      <Slider
-        value={_seats}
-        step={1}
-        maximumValue={10}
-        onValueChange={(s) => setSeats(s)}
-      />
-      <View style={vs30} />
-      <Text style={h3Style}>Venue</Text>
-      <Text style={h4Style}>Building</Text>
-      <ButtonGroup
-        buttons={venueOptions}
-        selectedIndex={_venueOption}
-        onPress={(index) => setVenueOption(index)}
-      />
-      <Text style={h4Style}>Dealer</Text>
-      <ButtonGroup
-        buttons={dealerOptions}
-        selectedIndex={_dealerOption}
-        onPress={(index) => setDealerOption(index)}
-      />
+        <RNPickerSelect
+          style={pickerSelectStyles}
+          value={_game}
+          onValueChange={(value) => setGame(value)}
+          items={[
+            { label: "PLO", value: "PLO" },
+            { label: "NLH", value: "NLH" },
+            { label: "DC", value: "DC" },
+          ]}
+        />
+      </View>
+      <View style={vs10} />
+      <View style={spacedRow}>
+        <Text style={h5Style}>Stakes</Text>
 
-      <Text style={h4Style}>Smoking</Text>
-
-      <ButtonGroup
-        buttons={smokingOptions}
-        selectedIndex={_smokingOption}
-        onPress={(index) => setSmokingOption(index)}
-      />
-
-      <Text style={h4Style}>Drinking</Text>
-      <Text style={h6Style}>Provided</Text>
-      <ButtonGroup
-        buttons={renderStraddleButtons(
-          drinkingOptionsProvided,
-          _drinkingOptionsProvided,
-          setDrinkingOptionsProvided,
-          "drinkingOptionsProvided"
+        <RNPickerSelect
+          style={pickerSelectStyles}
+          value={_stakeOptionIndex}
+          onValueChange={(value) => selectStakeOption(value)}
+          items={[
+            { label: "1-2", value: "1-2" },
+            { label: "2-5", value: "2-5" },
+            { label: "5-5", value: "5-5" },
+          ]}
+        />
+      </View>
+      <View style={vs10} />
+      <View style={spacedRow}>
+        <TouchableOpacity onPress={() => setShowStraddlePicker(true)}>
+          <Text style={hybridText}>
+            {renderOptionString("Straddles", _straddleIndexes)}
+          </Text>
+        </TouchableOpacity>
+        {_showStraddlePicker && (
+          <Button title="close" onPress={() => setShowStraddlePicker(false)} />
         )}
-        selectMultiple
-        selectedIndexes={_drinkingOptionsProvided}
-      />
-      <Text style={h6Style}>For Purchase</Text>
+      </View>
 
-      <ButtonGroup
-        buttons={renderStraddleButtons(
-          drinkingOptionsAvailable,
-          _drinkingOptionsAvailable,
-          setDrinkingOptionsAvailable,
-          "drinkingOptionsAvailable"
-        )}
-        selectMultiple
-        selectedIndexes={_drinkingOptionsAvailable}
-      />
-      <View style={vs30} />
-      <Button
-        title="Invite Members"
-        icon={{
-          name: "add",
-          size: 15,
-          color: "white",
-        }}
-        raised
-        onPress={saveGame}
-      />
+      {_showStraddlePicker ? (
+        <MultipleSelectPicker
+          items={["UTG", "BTN"]}
+          onSelectionsChange={(ele) => straddleIndexes(ele)}
+          selectedItems={_straddleIndexes}
+          buttonStyle={{
+            height: 100,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          buttonText="hello"
+          checkboxStyle={{ height: 20, width: 20 }}
+        />
+      ) : null}
+      <View style={vs10} />
+      <View style={spacedRow}>
+        <Text style={h5Style}>Seats</Text>
+
+        <RNPickerSelect
+          style={pickerSelectStyles}
+          value={_seats.toString()}
+          onValueChange={(value) => setSeats(Number(value))}
+          items={[
+            { label: "2", value: "2" },
+            { label: "3", value: "3" },
+            { label: "4", value: "4" },
+            { label: "5", value: "5" },
+            { label: "6", value: "6" },
+            { label: "7", value: "7" },
+            { label: "8", value: "8" },
+            { label: "9", value: "9" },
+            { label: "10", value: "10" },
+          ]}
+        />
+      </View>
+
       <View style={vs30} />
     </ScrollView>
   );
 };
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    minWidth: 100,
+    borderColor: "gray",
+    fontWeight: "600",
+    backgroundColor: "gainsboro",
+    borderRadius: 4,
+    color: "blue",
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+    borderColor: "purple",
+    borderRadius: 8,
+    color: "black",
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+});
 
 export default CreateGameScreen;

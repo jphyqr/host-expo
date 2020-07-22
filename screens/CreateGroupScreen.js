@@ -234,7 +234,7 @@ const CreateGroupScreen = ({ navigation }) => {
               size="large"
               rounded
               source={{
-                uri: a.url,
+                uri: a?.url,
               }}
             />
           );
