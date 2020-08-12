@@ -44,8 +44,6 @@ export const deleteGame = ({ firestore }, id) => {
 
 export const createGame = ({ firestore }, navigation, group, groupId) => {
   return async (dispatch, getState) => {
-    console.log("crateGame Action");
-
     try {
       let newGame = {
         creationDate: Date.now(),
@@ -136,7 +134,6 @@ export const createGame = ({ firestore }, navigation, group, groupId) => {
 export const deleteGroup = ({ firestore }) => {
   return async (dispatch, getState) => {
     try {
-      //  console.log("delete game", getState());
       const state = getState();
       const userUid = state.firebase.auth.uid;
       const id = state.group.id;
@@ -162,7 +159,6 @@ export const deleteGroup = ({ firestore }) => {
 
       var groupMemberSnap = await groupMemberQuery.get();
       groupMemberSnap.forEach((doc) => {
-        console.log("should delete groupMember", doc.id);
         batch.delete(doc.ref);
       });
 

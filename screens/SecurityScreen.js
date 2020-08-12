@@ -17,6 +17,7 @@ import {
 } from "../styles/styles";
 import { uploadUserDisplayPhoto } from "../actions/userActions";
 import { useFirestoreConnect } from "react-redux-firebase";
+import MemoAvatar from "../components/MemoAvatar";
 const SecurityScreen = ({ navigation }) => {
   const profile = useSelector((state) => state.firebase.profile || {});
   const auth = useSelector((state) => state.firebase.auth || {});
@@ -186,16 +187,6 @@ const SecurityScreen = ({ navigation }) => {
   return (
     <ScrollView>
       <View style={vs30} />
-      <Avatar
-        key={"profile"}
-        rounded
-        source={{ uri: profile.photoURL }}
-        size="small"
-        overlayContainerStyle={{ backgroundColor: "blue" }}
-        onPress={() => {
-          navigation.openDrawer();
-        }}
-      />
 
       <View style={vs30} />
 

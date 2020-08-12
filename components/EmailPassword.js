@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, Alert } from "react-native";
 import { Overlay, Input, Button, Icon } from "react-native-elements";
 import firebase from "../firebase";
 import { useSelector, useDispatch } from "react-redux";
 import { h5Style, vs30, errorStyle } from "../styles/styles";
 import _ from "lodash";
+import { debounce } from "lodash";
+import { SET_DISPLAY_NAME } from "../constants/reducerConstants";
 const EmailPassword = ({ onOkay }) => {
   const firestore = firebase.firestore();
   const dispatch = useDispatch();
   const profile = useSelector((state) => state.firebase.profile || {});
   const auth = useSelector((state) => state.firebase.auth || {});
+  const [_displayName, setDisplayName] = useState("");
+  const [_displayNameChanged, displayNameChanged] = useState(false);
+  const [_displayNameError, setDisplayNameError] = useState(false);
+  const [_displayNameErrorMsg, setDisplayNameErrorMsg] = useState("");
 
   const [_fU, fU] = useState(1);
   const [_updatingEP, updatingEP] = useState(false);
@@ -23,9 +29,66 @@ const EmailPassword = ({ onOkay }) => {
   const [_password, setPassword] = useState("");
   const [_emailError, setEmailError] = useState(false);
   const [_emailErrorMsg, setEmailErrorMsg] = useState("");
-
+  const [_loading, loading] = useState(false);
   const [_submitError, setSubmitError] = useState(false);
   const [_submitErrorMsg, setSubmitErrorMsg] = useState("");
+
+  const debouncedSearchTerm = useDebounce(_displayName, 1000);
+
+  function useDebounce(value, delay) {
+    // State and setters for debounced value
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+      if (_displayNameChanged) {
+        setTimeout(() => {
+          displayNameChanged(false);
+        }, 500);
+      }
+    }, [_displayNameChanged]);
+
+    useEffect(
+      () => {
+        // Update debounced value after delay
+        const handler = setTimeout(() => {
+          setDebouncedValue(value);
+        }, delay);
+
+        // Cancel the timeout if value changes (also on delay change or unmount)
+        // This is how we prevent debounced value from updating if value is changed ...
+        // .. within the delay period. Timeout gets cleared and restarted.
+        return () => {
+          clearTimeout(handler);
+        };
+      },
+      [value, delay] // Only re-call effect if value or delay changes
+    );
+
+    return debouncedValue;
+  }
+
+  const displayNameRef = useRef(false);
+  //   useEffect(() => {
+  //     const updateDisplayName = async () => {
+  //       var user = firebase.auth().currentUser;
+
+  //       await firestore.collection("users").doc(auth.uid).update({
+  //         displayName: _displayName,
+  //         userHasSetDisplayName: true,
+  //       });
+
+  //       await user.updateProfile({
+  //         displayName: _displayName,
+  //       });
+
+  //       displayNameChanged(true);
+  //     };
+
+  //     if (!_.isEmpty(debouncedSearchTerm)) {
+  //       if (displayNameRef.current) updateDisplayName();
+  //       else displayNameRef.current = true;
+  //     }
+  //   }, [debouncedSearchTerm]);
 
   useEffect(() => {
     auth.isLoaded && setEmail(auth.email);
@@ -34,7 +97,11 @@ const EmailPassword = ({ onOkay }) => {
       setEmailSet(true);
       setEmail(auth.email);
     }
-  }, [auth]);
+
+    if (profile.isLoaded) {
+      setDisplayName(profile.displayName);
+    }
+  }, []);
 
   const checkIfEmailExists = async (email) => {
     const ROOT_URL = "https://us-central1-poker-cf130.cloudfunctions.net";
@@ -46,7 +113,6 @@ const EmailPassword = ({ onOkay }) => {
 
       const { data: userExists } = data;
 
-      console.log({ userExists });
       if (userExists) {
         return true;
       } else {
@@ -112,6 +178,12 @@ const EmailPassword = ({ onOkay }) => {
 
       await firestore.collection("users").doc(auth.uid).update({
         userHasSetEP: true,
+        displayName: _displayName,
+        userHasSetDisplayName: true,
+      });
+
+      await user.updateProfile({
+        displayName: _displayName,
       });
 
       setEmailSet(true);
@@ -152,8 +224,34 @@ const EmailPassword = ({ onOkay }) => {
   };
 
   return (
-    <Overlay>
+    <Overlay isVisible={true}>
       <View>
+        <Text style={h5Style}>Display Name</Text>
+        <Input
+          rightIcon={
+            _displayNameChanged ? (
+              <Icon name="check" size={24} color="green" />
+            ) : (
+              <Icon
+                style={{ opacity: 0.3 }}
+                name="check"
+                size={24}
+                color="black"
+              />
+            )
+          }
+          leftIcon={<Icon name="verified-user" size={24} color="black" />}
+          inputStyle={{ flexBasis: "50%" }}
+          placeholder="Big Al"
+          value={_displayName}
+          onChangeText={(p) => {
+            setDisplayName(p);
+            displayNameChanged(true);
+          }}
+          errorStyle={{ color: "red" }}
+          errorMessage={_displayNameError ? _displayNameErrorMsg : ""}
+        />
+
         <Text style={h5Style}>Email</Text>
 
         <Input
@@ -207,7 +305,28 @@ const EmailPassword = ({ onOkay }) => {
         )}
 
         <View style={vs30} />
-        <Button title="Later" onPress={onOkay} type="outline" />
+        <Button
+          title="Later"
+          loading={_loading}
+          onPress={async () => {
+            loading(true);
+            var user = firebase.auth().currentUser;
+            await firestore.collection("users").doc(auth.uid).update({
+              displayName: _displayName,
+              userHasSetDisplayName: true,
+            });
+
+            await user.updateProfile({
+              displayName: _displayName,
+            });
+
+            dispatch({ type: SET_DISPLAY_NAME, payload: _displayName });
+
+            loading(false);
+            onOkay();
+          }}
+          type="outline"
+        />
       </View>
     </Overlay>
   );

@@ -36,10 +36,10 @@ const GroupAdminScreen = ({ navigation }) => {
   const [_fU, fU] = useState(0);
   const dispatch = useDispatch();
 
-  const handleDeleteGroup = async () => {
+  const handleDeleteGroup = async (navigation) => {
     Alert.alert(
       "Delete Group",
-      "This will delete all games, and stats for goroup.",
+      "This will delete all games, and stats for group.",
       [
         {
           text: "Cancel",
@@ -50,17 +50,14 @@ const GroupAdminScreen = ({ navigation }) => {
           onPress: async () => {
             try {
               deleting(true);
+              await dispatch(deleteGroup({ firestore }));
 
-              await dispatch(deleteGroup({ firestore }, _group.id));
-              dispatch({
-                type: DELETE_HOST_GROUP,
-                payload: { id: `${_group.id}_${auth.uid}` },
-              });
               console.log("should navigate to main");
-              navigation.goBack();
               deleting(false);
+              navigation.navigate("FeedScreen");
+              navigation.goBack();
             } catch (error) {
-              console.log({ error });
+              console.log("error", error);
               deleting(false);
             }
           },
@@ -69,7 +66,6 @@ const GroupAdminScreen = ({ navigation }) => {
       { cancelable: false }
     );
   };
-
   const handleCreateGameClick = async () => {
     loading(true);
 
@@ -77,7 +73,6 @@ const GroupAdminScreen = ({ navigation }) => {
       let createdGame = await dispatch(
         createGame({ firestore }, navigation, _group, _group.id)
       );
-      console.log({ createdGame });
 
       loading(false);
     } catch (error) {
@@ -118,16 +113,6 @@ const GroupAdminScreen = ({ navigation }) => {
     <ScrollView>
       <View style={spacedRow}>
         <Text style={h2Style}>{_group.name}</Text>
-
-        <Avatar
-          key={"groupAvatar"}
-          rounded
-          source={{ uri: _group?.photoURL }}
-          size="medium"
-          onPress={() => {
-            navigation.openDrawer();
-          }}
-        />
       </View>
 
       {!_.isEmpty(_group?.pending) && (
@@ -232,6 +217,12 @@ const GroupAdminScreen = ({ navigation }) => {
             color: "white",
           }}
         />
+
+        <Button
+          title="Delete Group"
+          loading={_deleting}
+          onPress={() => handleDeleteGroup(navigation)}
+        ></Button>
       </View>
 
       <View style={vs30} />

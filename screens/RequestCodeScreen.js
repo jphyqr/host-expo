@@ -120,8 +120,9 @@ const RequestCodeScreen = ({ navigation }) => {
       <Button
         disabled={_phone.length < 10}
         onPress={handleSubmit}
-        title="Submit"
+        title="Send Code"
         loading={_loading}
+        icon={<Icon name="sms" size={24} color="white" />}
       />
       {/* <Button onPress={() => navigation.navigate("Welcome")} title="Back" /> */}
       {_error && <Text>{_errorText}</Text>}
@@ -129,8 +130,10 @@ const RequestCodeScreen = ({ navigation }) => {
       <View style={{ marginBottom: 10, marginTop: 30 }}>
         <Text style={h1Style}>Already A Member?</Text>
         <Button
+          type="outline"
           onPress={() => navigation.navigate("EmailPassword")}
           title="Login with Email/Password"
+          icon={<Icon name="email" size={24} color="blue" />}
         />
       </View>
 

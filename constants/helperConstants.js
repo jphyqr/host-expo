@@ -22,6 +22,12 @@ export const GAME_STATES = {
   CLOSED: "CLOSED",
 };
 
+export const OVERLAYS = {
+  EDIT_PROFILE: "EDIT_PROFILE",
+  CHANGE_DISPLAY_NAME: "CHANGE_DISPLAY_NAME",
+  CLEAR: "CLEAR",
+};
+
 export const SCREEN_TYPE = {
   WIDE: "WIDE",
   MEDIUM: "MEDIUM",

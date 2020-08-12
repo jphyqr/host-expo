@@ -24,7 +24,7 @@ export const uploadUserDisplayPhoto = (file) => async (dispatch, getState) => {
         url: downloadURL,
         creationDate: Date.now(),
       });
-    console.log({ downloadURL });
+
     return { url: downloadURL };
   } catch (error) {
     console.log(error);

@@ -98,7 +98,6 @@ const AddMemberScreen = ({ navigation }) => {
 
       const { data: userExists } = data;
 
-      console.log({ userExists });
       if (userExists) {
         return true;
       } else {

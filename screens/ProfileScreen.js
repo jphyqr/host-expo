@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Alert } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import { View, Text, Alert, ActivityIndicator } from "react-native";
 import firebase from "../firebase";
 import { useSelector } from "react-redux/lib/hooks/useSelector";
 import { Avatar, Input, Button, Icon } from "react-native-elements";
@@ -15,9 +15,12 @@ import {
   averageRow,
   errorStyle,
 } from "../styles/styles";
+import { debounce } from "lodash";
 import { uploadUserDisplayPhoto } from "../actions/userActions";
 import { useFirestoreConnect } from "react-redux-firebase";
 import { ADD_USER_PHOTO } from "../constants/reducerConstants";
+import images from "../assets/images";
+import MemoAvatar from "../components/MemoAvatar";
 const ProfileScreen = ({ navigation }) => {
   const profile = useSelector((state) => state.firebase.profile || {});
   const auth = useSelector((state) => state.firebase.auth || {});
@@ -65,12 +68,13 @@ const ProfileScreen = ({ navigation }) => {
         navigation.navigate("SecurityScreen");
       }
     }
-  }, [profile]);
+  }, []);
 
   useEffect(() => {
     console.log("auth changed use effect");
   }, [auth.displayName]);
 
+  const avatarRef = useRef(false);
   useEffect(() => {
     console.log("ener useEffect", _avatar);
     const updatePhotoURL = async () => {
@@ -92,7 +96,8 @@ const ProfileScreen = ({ navigation }) => {
     };
 
     if (!_.isEmpty(profile) && profile.photoURL !== _avatar) {
-      updatePhotoURL();
+      if (avatarRef.current) updatePhotoURL();
+      else avatarRef.current = true;
     }
   }, [_avatar]);
 
@@ -140,6 +145,8 @@ const ProfileScreen = ({ navigation }) => {
       await firestore.collection("users").doc(auth.uid).update({
         userHasSetAvatar: true,
       });
+
+      fU(_fU + 1);
       photoLoading(false);
     } catch (error) {
       console.log("error picking photo", error);
@@ -147,25 +154,10 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  if (!profile.isLoaded) return <ActivityIndicator />;
   return (
     <ScrollView>
       <View style={vs30} />
-      <Avatar
-        key={"profile"}
-        rounded
-        source={{ uri: profile.photoURL }}
-        size="small"
-        showAccessory
-        accessory={{
-          name: "add",
-          type: "material",
-          color: "red",
-        }}
-        overlayContainerStyle={{ backgroundColor: "blue" }}
-        onPress={() => {
-          navigation.openDrawer();
-        }}
-      />
 
       <View style={vs30} />
 
@@ -258,55 +250,61 @@ const ProfileScreen = ({ navigation }) => {
           />
         )}
 
-        {user_photos.map((a, i) => {
-          return (
-            <Avatar
-              onPress={async () => {
-                await firestore.collection("users").doc(auth.uid).update({
-                  userHasSetAvatar: true,
-                });
-                setAvatar(a.url);
-                setUploadedPhotoSelected(false);
-              }}
-              key={i}
-              showAccessory={_avatar === a.url}
-              accessory={{
-                name: "check",
-                type: "material",
-                color: "green",
-              }}
-              size="large"
-              rounded
-              source={{
-                uri: a.url,
-              }}
-            />
+        {xUserPhotos.map((a, i) => {
+          return React.useMemo(
+            () => (
+              <Avatar
+                onPress={async () => {
+                  await firestore.collection("users").doc(auth.uid).update({
+                    userHasSetAvatar: true,
+                  });
+                  setAvatar(a.url);
+                  setUploadedPhotoSelected(false);
+                }}
+                key={i}
+                showAccessory={_avatar === a.url}
+                accessory={{
+                  name: "check",
+                  type: "material",
+                  color: "green",
+                }}
+                size="large"
+                rounded
+                source={{
+                  uri: a.url,
+                }}
+              />
+            ),
+            []
           );
         })}
 
         {avatars.map((a, i) => {
-          return (
-            <Avatar
-              onPress={async () => {
-                await firestore.collection("users").doc(auth.uid).update({
-                  userHasSetAvatar: true,
-                });
-                setAvatar(a.url);
-                setUploadedPhotoSelected(false);
-              }}
-              key={i}
-              showAccessory={_avatar === a.url}
-              accessory={{
-                name: "check",
-                type: "material",
-                color: "green",
-              }}
-              size="large"
-              rounded
-              source={{
-                uri: a.url,
-              }}
-            />
+          return React.useMemo(
+            () => (
+              <Avatar
+                onPress={async () => {
+                  await firestore.collection("users").doc(auth.uid).update({
+                    userHasSetAvatar: true,
+                  });
+                  setAvatar(a.url);
+                  setUploadedPhotoSelected(false);
+                }}
+                key={i}
+                showAccessory={_avatar === a.url}
+                accessory={{
+                  name: "check",
+                  type: "material",
+                  color: "green",
+                }}
+                size="large"
+                rounded
+                source={{
+                  uri: a.url,
+                }}
+              />
+            ),
+            []
           );
         })}
       </ScrollView>

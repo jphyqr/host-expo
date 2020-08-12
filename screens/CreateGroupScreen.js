@@ -16,6 +16,7 @@ import {
   CREATE_HOST_GROUP,
 } from "../constants/reducerConstants";
 import { uploadPhotoPreGroup } from "../actions/groupActions";
+import MemoAvatar from "../components/MemoAvatar";
 const CreateGroupScreen = ({ navigation }) => {
   const avatars = useSelector((state) => state.avatars.venue || []);
   const dispatch = useDispatch();
@@ -46,9 +47,9 @@ const CreateGroupScreen = ({ navigation }) => {
     try {
       loading(true);
 
-      if (_displayName.length < 5) {
+      if (_displayName.length < 1 || _displayName.length > 10) {
         setDisplayNameError(true);
-        setDisplayNameErrorMsg("display name should be at least 5 char");
+        setDisplayNameErrorMsg("display name should be 1-10 Chars");
         loading(false);
         return;
       }
@@ -101,9 +102,12 @@ const CreateGroupScreen = ({ navigation }) => {
         type: SET_GROUP,
         payload: { id: addGroup.id, ...newGroup },
       });
-
       navigation.goBack();
-      navigation.navigate("ManageGroupFlow");
+      navigation.navigate("Feed", {
+        screen: "ManageGroupFlow",
+        groupPhotoURL: _avatar,
+        groupName: _displayName,
+      });
       loading(false);
     } catch (error) {
       console.log("create group error", error);
@@ -122,7 +126,7 @@ const CreateGroupScreen = ({ navigation }) => {
     }
 
     let pickerResult = await ImagePicker.launchImageLibraryAsync();
-    console.log({ pickerResult });
+
     setPhoto(pickerResult.uri);
 
     setUploadedPhotoSelected(true);
@@ -194,7 +198,7 @@ const CreateGroupScreen = ({ navigation }) => {
         />
 
         {_photoUploaded && (
-          <Avatar
+          <MemoAvatar
             key={"addedphoto"}
             rounded
             source={{
@@ -219,7 +223,7 @@ const CreateGroupScreen = ({ navigation }) => {
 
         {avatars.map((a, i) => {
           return (
-            <Avatar
+            <MemoAvatar
               onPress={() => {
                 setAvatar(a.url);
                 setUploadedPhotoSelected(false);
@@ -243,6 +247,7 @@ const CreateGroupScreen = ({ navigation }) => {
       <View style={vs30} />
       <Button
         loading={_.isEmpty(_avatar) || _loading}
+        disabled={_loading}
         onPress={handleSubmit}
         title="Create Group"
       />

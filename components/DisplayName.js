@@ -13,61 +13,62 @@ const DisplayName = ({ onOkay }) => {
   const [_fU, fU] = useState(1);
   const [_updatingDisplayName, updatingDisplayName] = useState(false);
   const firestore = firebase.firestore();
+  const dispatch = useDispatch();
   useEffect(() => {
     setDisplayName(auth.displayName);
   }, [auth]);
 
   return (
-    <Overlay>
-      <Text style={h5Style}>Display Name</Text>
-      <Input
-        inputStyle={{ flexBasis: "50%" }}
-        placeholder="Big Al"
-        value={_displayName}
-        onChangeText={(p) => {
-          setDisplayName(p);
-          displayNameChanged(true);
-        }}
-        errorStyle={{ color: "red" }}
-        errorMessage={_displayNameError ? _displayNameErrorMsg : ""}
-      />
+    <Overlay isVisible={true}>
+      <View>
+        <Text style={h5Style}>Display Name</Text>
+        <Input
+          inputStyle={{ flexBasis: "50%" }}
+          placeholder="Big Al"
+          value={_displayName}
+          onChangeText={(p) => {
+            setDisplayName(p);
+            displayNameChanged(true);
+          }}
+          errorStyle={{ color: "red" }}
+          errorMessage={_displayNameError ? _displayNameErrorMsg : ""}
+        />
 
-      <Button
-        title={
-          !_displayNameChanged ? `${_displayName} is fine` : "Set Displayname"
-        }
-        loading={_updatingDisplayName}
-        onPress={async () => {
-          try {
-            updatingDisplayName(true);
-            await firestore.collection("users").doc(auth.uid).update({
-              displayName: _displayName,
-              userHasSetDisplayName: true,
-            });
-            var user = firebase.auth().currentUser;
-
-            await user.updateProfile({
-              displayName: _displayName,
-            });
-
-            console.log(auth.displayName);
-
-            updatingDisplayName(false);
-            displayNameChanged(false);
-            onOkay();
-          } catch (error) {
-            console.log("error updating display name", error);
-            Alert.alert(
-              "Oops!",
-              "cound not update display name",
-              [{ text: "OK", onPress: () => onOkay() }],
-              { cancelable: false }
-            );
-            updatingDisplayName(false);
-            displayNameChanged(false);
+        <Button
+          title={
+            !_displayNameChanged ? `${_displayName} is fine` : "Set Displayname"
           }
-        }}
-      />
+          loading={_updatingDisplayName}
+          onPress={async () => {
+            try {
+              updatingDisplayName(true);
+              await firestore.collection("users").doc(auth.uid).update({
+                displayName: _displayName,
+                userHasSetDisplayName: true,
+              });
+              var user = firebase.auth().currentUser;
+
+              await user.updateProfile({
+                displayName: _displayName,
+              });
+
+              updatingDisplayName(false);
+              displayNameChanged(false);
+              onOkay();
+            } catch (error) {
+              console.log("error updating display name", error);
+              Alert.alert(
+                "Oops!",
+                "cound not update display name",
+                [{ text: "OK", onPress: () => onOkay() }],
+                { cancelable: false }
+              );
+              updatingDisplayName(false);
+              displayNameChanged(false);
+            }
+          }}
+        />
+      </View>
     </Overlay>
   );
 };

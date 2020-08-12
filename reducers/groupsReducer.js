@@ -37,7 +37,7 @@ export const groupReducer = (state = {}, action) => {
       let uMembers = uGroup.members;
       uMembers[`${action.payload.id}`] = action.payload;
       uGroup.members = uMembers;
-      console.log({ uMembers });
+
       return { ...uGroup };
       break;
     }

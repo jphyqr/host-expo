@@ -14,7 +14,7 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 import firebase from "../firebase";
 import { useSelector } from "react-redux/lib/hooks/useSelector";
-import { PRIVACY, GAME_STATES } from "../constants/helperConstants";
+import { PRIVACY, GAME_STATES, OVERLAYS } from "../constants/helperConstants";
 import { useFirestoreConnect } from "react-redux-firebase";
 import { Avatar, Card, ListItem, Badge, Overlay } from "react-native-elements";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
@@ -31,6 +31,9 @@ import {
   SET_AREA_GROUPS,
   SET_MEMBERS_IN_AREA,
   SET_USER_PHOTOS,
+  SET_OVERLAY,
+  SET_DISPLAY_NAME,
+  SET_PHOTO_URL,
 } from "../constants/reducerConstants";
 import { registerForPushNotifications } from "../services/push_notifications";
 import { Notifications } from "expo";
@@ -56,10 +59,13 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import DisplayName from "../components/DisplayName";
 import EmailPassword from "../components/EmailPassword";
+import ChangeDisplayPhoto from "../components/ChangeDisplayPhoto";
 const FeedScreen = ({ navigation }) => {
   const auth = useSelector((state) => state.firebase.auth);
   const ROOT_URL = "https://us-central1-poker-cf130.cloudfunctions.net";
   const [_loading, loading] = useState(false);
+  const [_editProfile, setEditProfile] = useState(false);
+  const [_changeDisplayPhoto, setChangeDisplayPhoto] = useState(false);
   const profile = useSelector((state) => state.firebase.profile || {});
   const game_s = useSelector((state) => state.game_s || []);
   const [_feed, setFeed] = useState([]);
@@ -74,7 +80,7 @@ const FeedScreen = ({ navigation }) => {
   const [_noDisplayName, setNoDisplayName] = useState(false);
   const [_noPassword, setNoPassword] = useState(false);
   const xAreaGroups = useSelector((state) => state.areaGroups || []);
-
+  const xOverlay = useSelector((state) => state.overlay || "");
   const xInviteGroups = useSelector((state) => state.inviteGroups || []);
 
   const xMemberGroups = useSelector((state) => state.memberGroups || []);
@@ -96,24 +102,45 @@ const FeedScreen = ({ navigation }) => {
 
   useFirestoreConnect(gamesQuery);
   const games = useSelector((state) => state.firestore.ordered.gamesSnap || []);
-  useFocusEffect(
-    React.useCallback(() => {
-      console.log("USE FOCUS EFFECT");
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     console.log("USE FOCUS EFFECT");
 
-      return () => refreshFeed();
-    }, [])
-  );
+  //     return () => refreshFeed();
+  //   }, [])
+  // );
 
   useEffect(() => {
-    if (profile.isLoaded && !profile.isEmpty) {
-      if (!profile.userHasSetDisplayName) setNoDisplayName(true);
-      if (!profile.userHasSetEP) {
-        setNoPassword(true);
-      }
-      setProfile(profile);
-      setNewFeed(profile.newFeed);
+    if (xOverlay === OVERLAYS.EDIT_PROFILE) setEditProfile(true);
+    else if (xOverlay === OVERLAYS.CHANGE_DISPLAY_NAME)
+      setChangeDisplayPhoto(true);
+    else {
+      setEditProfile(false);
+      setChangeDisplayPhoto(false);
     }
-  }, [profile]);
+  }, [xOverlay]);
+
+  // useEffect(() => {
+  //   if (profile.isLoaded && !profile.isEmpty) {
+  //     if (!profile.userHasSetEP) setNoPassword(true);
+  //     else if (!profile.userHasSetDisplayName) {
+  //       setNoDisplayName(true);
+  //     }
+  //     setProfile(profile);
+  //     setNewFeed(profile.newFeed);
+  //   }
+  // }, [profile]);
+
+  useEffect(() => {
+    if (
+      !_noDisplayName &&
+      profile.isLoaded &&
+      !profile.isEmpty &&
+      !profile.userHasSetEP
+    ) {
+      setNoPassword(true);
+    }
+  }, [_noDisplayName]);
 
   useEffect(() => {
     setHostGroups(xHostGroups);
@@ -125,22 +152,16 @@ const FeedScreen = ({ navigation }) => {
     setCount(count + 1);
   }, [xAreaGroups]);
   useEffect(() => {
-    console.log("INVITE GROUPS CHANGED");
     setInvitedGroups(xInviteGroups);
     setCount(count + 1);
   }, [xInviteGroups]);
   useEffect(() => {
-    console.log("MEMBER GROUPS CHANGED");
     setMemberGroups(xMemberGroups);
     setCount(count + 1);
   }, [xMemberGroups]);
 
-  const refreshFeed = async () => {
+  const refreshFeed = async (data) => {
     //  await checkPermissions();
-    loading(true);
-    let { data } = await axios.post(`${ROOT_URL}/getMobileHomeData`, {
-      uid: auth.uid,
-    });
 
     const {
       hostGroups,
@@ -153,8 +174,6 @@ const FeedScreen = ({ navigation }) => {
       other_users_in_area,
       user_photos,
     } = data || [];
-
-    setGroups(other_groups_in_area);
 
     dispatch({ type: SET_USER_PHOTOS, payload: user_photos });
 
@@ -169,20 +188,38 @@ const FeedScreen = ({ navigation }) => {
 
     dispatch({ type: SET_AREA_GROUPS, payload: other_groups_in_area });
 
+    setGroups(other_groups_in_area);
     setFeed(feed);
 
     setGamesLive(games);
-
     setCount(count + 1);
+
     dispatch({ type: SET_GAME_S, payload: games });
-    loading(false);
   };
 
   useEffect(() => {
+    console.log("UE 1 CHANGED");
+    let source = axios.CancelToken.source();
+    let mounted = true;
+
     const getFeedItems = async () => {
       loading(true);
       if (auth.isLoaded && !auth.isEmpty) {
-        await refreshFeed();
+        try {
+          let { data } = await axios.post(`${ROOT_URL}/getMobileHomeData`, {
+            cancelToken: source.token,
+            uid: auth.uid,
+          });
+
+          refreshFeed(data);
+        } catch (error) {
+          if (Axios.isCancel(error)) {
+            console.log(`call for ${url} was cancelled`);
+          } else {
+            console.log("RefershFeed Error", error);
+            throw error;
+          }
+        }
       }
       loading(false);
     };
@@ -200,17 +237,28 @@ const FeedScreen = ({ navigation }) => {
       }
     };
 
+    const setUser = () => {
+      dispatch({ type: SET_DISPLAY_NAME, payload: auth.displayName });
+
+      dispatch({ type: SET_PHOTO_URL, payload: auth.photoURL });
+    };
     auth.isLoaded && !auth.isEmpty && getFeedItems();
+
+    auth.isLoaded && !auth.isEmpty && setUser();
 
     auth.isLoaded && !auth.isEmpty && saveTokenToStorage();
 
     if (auth.isLoaded && auth.isEmpty) {
       navigation.navigate("Welcome");
     }
-  }, [auth]);
+
+    return () => {
+      // Let's cancel the request on effect cleanup
+      source.cancel();
+    };
+  }, []);
 
   useEffect(() => {
-    console.log("game_s changed");
     setGamesLive(game_s);
     setCount(count + 1);
   }, [game_s]);
@@ -219,8 +267,12 @@ const FeedScreen = ({ navigation }) => {
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
+    console.log("trying to refresh from location 2", auth.uid);
+    let { data } = await axios.post(`${ROOT_URL}/getMobileHomeData`, {
+      uid: auth.uid,
+    });
 
-    await refreshFeed();
+    refreshFeed(data);
 
     setRefreshing(false);
   }, []);
@@ -234,32 +286,39 @@ const FeedScreen = ({ navigation }) => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {_noDisplayName && <DisplayName onOkay={() => setNoDisplayName(false)} />}
+      {_noDisplayName && (
+        <DisplayName
+          onOkay={() => {
+            setNoDisplayName(false);
 
-      {_noPassword && <EmailPassword onOkay={() => setNoPassword(false)} />}
+            if (!profile.userHasSetEP) setNoPassword(true);
+          }}
+        />
+      )}
+
+      {_editProfile && (
+        <EmailPassword
+          onOkay={() =>
+            dispatch({
+              type: SET_OVERLAY,
+              payload: OVERLAYS.CLEAR,
+            })
+          }
+        />
+      )}
+      {_changeDisplayPhoto && (
+        <ChangeDisplayPhoto
+          onOkay={() => {
+            dispatch({
+              type: SET_OVERLAY,
+              payload: OVERLAYS.CLEAR,
+            });
+          }}
+        />
+      )}
 
       <View style={{ display: "flex", flexDirection: "row" }}>
-        <View style={{ marginRight: 20 }}>
-          <Avatar
-            key={"profile"}
-            avatarStyle={{
-              borderWidth: 1,
-              borderRadius: 50,
-              borderColor: "orange",
-            }}
-            rounded
-            source={{
-              uri:
-                _profile?.photoURL ||
-                "https://firebasestorage.googleapis.com/v0/b/poker-cf130.appspot.com/o/avatars%2Ffish.png?alt=media&token=6381537c-65b8-4ecd-a952-a3a8579ff883",
-            }}
-            size="small"
-            overlayContainerStyle={{ backgroundColor: "blue" }}
-            onPress={() => {
-              navigation.openDrawer();
-            }}
-          />
-        </View>
+        <View style={{ marginRight: 20 }}></View>
         <View style={{ flexDirection: "column" }}>
           <Text style={h5Style}>My Groups</Text>
           <ScrollView
@@ -335,6 +394,7 @@ const FeedScreen = ({ navigation }) => {
                     size="medium"
                     overlayContainerStyle={{ backgroundColor: "blue" }}
                     onPress={async () => {
+                      let group;
                       try {
                         console.log("pressed", item);
                         loading(true);
@@ -342,18 +402,28 @@ const FeedScreen = ({ navigation }) => {
                           .collection("groups")
                           .doc(item.groupId)
                           .get();
+
+                        group = { id: item.groupId, ...groupDoc.data() };
                         dispatch({
                           type: SET_GROUP,
-                          payload: { id: item.groupId, ...groupDoc.data() },
+                          payload: group,
                         });
+
                         loading(false);
                       } catch (error) {
                         console.log("error moving groups", error);
                         loading(false);
                       }
 
-                      console.log("group set, should navigate ");
-                      navigation.navigate("ManageGroupFlow");
+                      console.log(
+                        "group set, should navigate ",
+                        item.groupName
+                      );
+                      navigation.navigate("Feed", {
+                        screen: "ManageGroupFlow",
+                        groupPhotoURL: item.groupPhotoURL,
+                        groupName: item.groupName,
+                      });
                     }}
                   />
                 </View>
@@ -464,7 +534,7 @@ const FeedScreen = ({ navigation }) => {
                   item.hostUid === auth.uid
                     ? () => {
                         dispatch({ type: SET_GAME, payload: item });
-                        navigation.navigate("CreateGameFlow", {
+                        navigate("CreateGameFlow", {
                           hostUid: item.hostUid,
                           gameState: item.gameState,
                           gameName: item.gameSettings.title,

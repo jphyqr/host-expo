@@ -94,7 +94,7 @@ export const inviteMembersToGroup = (
     }
 
     uGroup.invited = uInvite;
-    console.log({ uInvite });
+
     dispatch({ type: SET_GROUP, payload: uGroup });
   } catch (error) {
     console.log(error);

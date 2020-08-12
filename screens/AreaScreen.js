@@ -24,7 +24,6 @@ const AreaScreen = () => {
   const [_members, setMembers] = useState([]);
   const [_following, setFollowing] = useState([]);
   useEffect(() => {
-    console.log("useEffect members", xMembersInArea);
     setMembers(xMembersInArea);
   }, [xMembersInArea]);
 

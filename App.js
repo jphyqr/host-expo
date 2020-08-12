@@ -1,5 +1,5 @@
 import "react-native-gesture-handler";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -58,6 +58,7 @@ import {
   SET_GROUP,
   SET_AVATARS,
   DELETE_GROUP,
+  SET_OVERLAY,
 } from "./constants/reducerConstants";
 import AddMemberScreen from "./screens/AddMemberScreen";
 import CreateGroupScreen from "./screens/CreateGroupScreen";
@@ -66,7 +67,7 @@ import InviteGroupMembersScreen from "./screens/InviteGroupMembersScreen";
 import GroupScoutScreen from "./screens/GroupScoutScreen";
 import GroupPreviewScreen from "./screens/GroupPreviewScreen";
 import SecurityScreen from "./screens/SecurityScreen";
-import { Icon } from "react-native-elements";
+import { Icon, Avatar } from "react-native-elements";
 import GroupsGamesScreen from "./screens/GroupsGamesScreen";
 import GameDetailScreen from "./screens/CreateGame/GameDetailScreen";
 import ManageGameScreen from "./screens/CreateGame/ManageGameScreen";
@@ -74,8 +75,25 @@ import PlayGameScreen from "./screens/CreateGame/PlayGameScreen";
 import GameRunning from "./screens/GameRunning";
 import RegistrationDetails from "./screens/RegistrationDetails";
 const { store, persistor } = configureStore();
-
+import { YellowBox } from "react-native";
+import _ from "lodash";
+import MemoAvatar from "./components/MemoAvatar";
+import EmailPassword from "./components/EmailPassword";
+import ChangeDisplayPhoto from "./components/ChangeDisplayPhoto";
+import { OVERLAYS } from "./constants/helperConstants";
+import ProfileAvatar from "./components/ProfileAvatar";
+import EditProfileAvatar from "./components/EditProfileAvatar";
+import { spacedRow } from "./styles/styles";
+import Handle from "./components/Handle";
 const App = () => {
+  YellowBox.ignoreWarnings(["Setting a timer"]);
+  const _console = _.clone(console);
+  console.warn = (message) => {
+    if (message.indexOf("Setting a timer") <= -1) {
+      _console.warn(message);
+    }
+  };
+
   const rrfConfig = {
     userProfile: "users",
     useFirestoreForProfile: true, // Firestore for Profile instead of Realtime DB
@@ -109,9 +127,9 @@ function WrappedApp({ navigation }) {
   const TopTab = createMaterialTopTabNavigator();
   const firestore = firebase.firestore();
   const dispatch = useDispatch();
-  const user = firebase.auth().currentUser;
-  console.log({ user });
+
   useEffect(() => {
+    let isCancelled = false;
     const checkPermissions = async () => {
       try {
         await registerForPushNotifications();
@@ -176,16 +194,20 @@ function WrappedApp({ navigation }) {
         venueAvatars.forEach((doc) => {
           venue_avatars.push({ ...doc.data() });
         });
-
-        dispatch({
-          type: SET_AVATARS,
-          payload: { user: avatars, venue: venue_avatars },
-        });
+        if (!isCancelled)
+          dispatch({
+            type: SET_AVATARS,
+            payload: { user: avatars, venue: venue_avatars },
+          });
       } catch (error) {}
     };
 
     checkPermissions();
     loadAvatars();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   const registerForPushNotificationsAsync = async () => {
@@ -234,8 +256,6 @@ function WrappedApp({ navigation }) {
             try {
               await dispatch(deleteGroup({ firestore }));
 
-              console.log("should navigate to main");
-
               navigation.navigate("FeedScreen");
               navigation.goBack();
             } catch (error) {
@@ -273,7 +293,6 @@ function WrappedApp({ navigation }) {
   };
 
   const LiveGameFlow = ({ route }) => {
-    console.log("live game flow", route);
     return (
       <TopTab.Navigator
         tabBarOptions={{
@@ -511,10 +530,35 @@ function WrappedApp({ navigation }) {
       </TopTab.Navigator>
     );
   };
-  const Feed = () => {
+
+  const Area = ({ navigation }) => {
     return (
       <Stack.Navigator>
-        <Stack.Screen name="FeedScreen" component={FeedScreen} />
+        <Stack.Screen
+          name="AreaScreen"
+          options={{
+            title: "Regina",
+
+            headerLeft: () => <ProfileAvatar navigation={navigation} />,
+          }}
+          component={AreaScreen}
+        />
+      </Stack.Navigator>
+    );
+  };
+
+  const Feed = ({ route, navigation }) => {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen
+          name="FeedScreen"
+          options={{
+            headerRight: () => <Handle />,
+            title: "Private Host",
+            headerLeft: () => <ProfileAvatar navigation={navigation} />,
+          }}
+          component={FeedScreen}
+        />
         <Stack.Screen name="GameScreen" component={LiveGameFlow} />
         <Stack.Screen name="GroupScoutScreen" component={GroupScoutScreen} />
 
@@ -525,7 +569,34 @@ function WrappedApp({ navigation }) {
 
         <Stack.Screen name="CreateGroupFlow" component={CreateGroupFlow} />
 
-        <Stack.Screen name="ManageGroupFlow" component={ManageGroupFlow} />
+        <Stack.Screen
+          options={{
+            title: `${route?.params?.groupName || "No Name"}`,
+            headerBackImage: () => (
+              <Ionicons
+                style={{ marginLeft: 5 }}
+                name={"ios-home"}
+                size={30}
+                color={"blue"}
+              />
+            ),
+            headerBackTitleVisible: false,
+            headerRight: () => (
+              <MemoAvatar
+                key={"groupAvatar"}
+                rounded
+                source={{ uri: route.params.groupPhotoURL }}
+                updateOn={route.params.groupPhotoURL}
+                size="small"
+                onPress={() => {
+                  navigation.openDrawer();
+                }}
+              />
+            ),
+          }}
+          name="ManageGroupFlow"
+          component={ManageGroupFlow}
+        />
 
         <Stack.Screen name="GroupScreen" component={GroupScreen} />
 
@@ -572,32 +643,54 @@ function WrappedApp({ navigation }) {
       >
         <Tab.Screen name="Feed" component={Feed} />
 
-        <Tab.Screen name="AreaScreen" component={AreaScreen} />
-
-        <Tab.Screen
-          name="ProfileScreen"
-          component={ProfileTabs}
-          options={{ title: "Profile" }}
-        />
+        <Tab.Screen name="AreaScreen" component={Area} />
+        {/* 
+        <Tab.Screen name="ProfileScreen" component={Profile} /> */}
       </Tab.Navigator>
     );
   };
 
   const Drawer = createDrawerNavigator();
 
-  function CustomDrawerContent({ navigation, ...props }) {
+  function CustomDrawerContent({ route, navigation, ...props }) {
     return (
       <DrawerContentScrollView {...props}>
-        <DrawerItemList {...props} />
         <DrawerItem
-          label="Edit Profile"
-          onPress={() => navigation.navigate("ProfileScreen")}
+          label={() => (
+            <View
+              style={[
+                spacedRow,
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: "lightblue",
+                  padding: 10,
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  borderRadius: 10,
+                  width: 150,
+                },
+              ]}
+            >
+              <Handle />
+              <Icon name="edit" />
+            </View>
+          )}
+          labelStyle={{}}
+          icon={() => <EditProfileAvatar />}
+          onPress={() =>
+            dispatch({
+              type: SET_OVERLAY,
+              payload: OVERLAYS.EDIT_PROFILE,
+            })
+          }
         />
 
         <DrawerItem
           label="Help"
           onPress={() => Linking.openURL("https://privatehost.ca/help")}
         />
+
         <DrawerItem
           label="Sign Out"
           onPress={() => {
@@ -628,7 +721,10 @@ function WrappedApp({ navigation }) {
         openByDefault={false}
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
-        <Drawer.Screen name="Main" component={MainClosed} />
+        <Drawer.Screen
+          name={firebase.auth().currentUser.displayName}
+          component={MainClosed}
+        />
       </Drawer.Navigator>
     );
   };
@@ -672,7 +768,7 @@ function WrappedApp({ navigation }) {
         <Tab.Screen
           name="Main"
           component={Main}
-          options={{ title: "Private Host", tabBarVisible: false }}
+          options={{ title: () => <Handle />, tabBarVisible: false }}
         />
       </Tab.Navigator>
     </NavigationContainer>
