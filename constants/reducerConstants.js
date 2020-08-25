@@ -47,3 +47,5 @@ export const SET_OVERLAY = "SET_OVERLAY";
 
 export const SET_DISPLAY_NAME = "SET_DISPLAY_NAME";
 export const SET_PHOTO_URL = "SET_PHOTO_URL";
+
+export const SET_TOUCH = "SET_TOUCH";

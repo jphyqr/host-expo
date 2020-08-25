@@ -78,6 +78,8 @@ const AreaScreen = () => {
   return (
     <ScrollView>
       <View style={vs30} />
+      <View style={vs30} />
+      <View style={vs30} />
       <Text style={h5Style}>Users In Area</Text>
       <View style={vs10} />
       <Text style={h6Style}>

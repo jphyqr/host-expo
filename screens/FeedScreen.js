@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Button,
-  Image,
   SectionList,
   AsyncStorage,
   ActivityIndicator,
@@ -16,7 +15,14 @@ import firebase from "../firebase";
 import { useSelector } from "react-redux/lib/hooks/useSelector";
 import { PRIVACY, GAME_STATES, OVERLAYS } from "../constants/helperConstants";
 import { useFirestoreConnect } from "react-redux-firebase";
-import { Avatar, Card, ListItem, Badge, Overlay } from "react-native-elements";
+import {
+  Avatar,
+  Card,
+  ListItem,
+  Badge,
+  Overlay,
+  Image,
+} from "react-native-elements";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { useDispatch } from "react-redux/lib/hooks/useDispatch";
 import {
@@ -60,11 +66,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import DisplayName from "../components/DisplayName";
 import EmailPassword from "../components/EmailPassword";
 import ChangeDisplayPhoto from "../components/ChangeDisplayPhoto";
+import RecordVideo from "../components/RecordVideo";
 const FeedScreen = ({ navigation }) => {
   const auth = useSelector((state) => state.firebase.auth);
   const ROOT_URL = "https://us-central1-poker-cf130.cloudfunctions.net";
   const [_loading, loading] = useState(false);
   const [_editProfile, setEditProfile] = useState(false);
+  const [_recordVideo, setRecordVideo] = useState(false);
   const [_changeDisplayPhoto, setChangeDisplayPhoto] = useState(false);
   const profile = useSelector((state) => state.firebase.profile || {});
   const game_s = useSelector((state) => state.game_s || []);
@@ -114,9 +122,11 @@ const FeedScreen = ({ navigation }) => {
     if (xOverlay === OVERLAYS.EDIT_PROFILE) setEditProfile(true);
     else if (xOverlay === OVERLAYS.CHANGE_DISPLAY_NAME)
       setChangeDisplayPhoto(true);
+    else if (xOverlay === OVERLAYS.RECORD) setRecordVideo(true);
     else {
       setEditProfile(false);
       setChangeDisplayPhoto(false);
+      setRecordVideo(false);
     }
   }, [xOverlay]);
 
@@ -286,6 +296,9 @@ const FeedScreen = ({ navigation }) => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
+      <View style={vs30} />
+      <View style={vs30} />
+      <View style={vs30} />
       {_noDisplayName && (
         <DisplayName
           onOkay={() => {
@@ -295,6 +308,8 @@ const FeedScreen = ({ navigation }) => {
           }}
         />
       )}
+
+      {/* {_recordVideo && <RecordVideo />} */}
 
       {_editProfile && (
         <EmailPassword
@@ -419,7 +434,7 @@ const FeedScreen = ({ navigation }) => {
                         "group set, should navigate ",
                         item.groupName
                       );
-                      navigation.navigate("Feed", {
+                      navigation.navigate("Main", {
                         screen: "ManageGroupFlow",
                         groupPhotoURL: item.groupPhotoURL,
                         groupName: item.groupName,
@@ -534,10 +549,10 @@ const FeedScreen = ({ navigation }) => {
                   item.hostUid === auth.uid
                     ? () => {
                         dispatch({ type: SET_GAME, payload: item });
-                        navigate("CreateGameFlow", {
+                        navigation.navigate("CreateGameFlow", {
                           hostUid: item.hostUid,
                           gameState: item.gameState,
-                          gameName: item.gameSettings.title,
+                          gameName: "test", // item.gameSettings.title,
                           isPlaying:
                             item.seating.filter((s) => s.uid === auth.uid)
                               .length > 0,
@@ -556,7 +571,7 @@ const FeedScreen = ({ navigation }) => {
                 <Card
                   containerStyle={{
                     width: 100,
-                    height: 300,
+                    height: 370,
                     backgroundColor: "cornsilk",
                     borderRadius: 5,
                     shadowColor: "#000",
@@ -566,216 +581,181 @@ const FeedScreen = ({ navigation }) => {
                     padding: 2,
                   }}
                 >
-                  {item.hostUid === auth.uid && (
-                    <Badge
-                      value={
-                        <View style={{ flexDirection: "row" }}>
-                          <Icon
-                            name="shield-account"
-                            type="material"
-                            size={15}
-                            color="white"
-                          />
-                        </View>
-                      }
-                      badgeStyle={{
-                        backgroundColor: "lightgrey",
-                      }}
-                      badgeStyle={{
-                        height: 25,
-                        width: 25,
-                        borderRadius: 50,
-                        backgroundColor: "grey",
-                      }}
-                      containerStyle={{
-                        position: "absolute",
-                        top: 5,
-                        right: -10,
-                      }}
-                    />
-                  )}
-
-                  <Badge
-                    status={"primary"}
-                    value={
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <Icon
-                          name="cards"
-                          type="material"
-                          size={25}
-                          color="white"
-                        />
-
-                        <Text style={[h7Style, { color: "white" }]}>
-                          {item.gameSettings?.stakes} {item.gameSettings?.game}
-                        </Text>
-                      </View>
-                    }
-                    textStyle={{
-                      color: "white",
-                      fontSize: 20,
-                    }}
-                    badgeStyle={{
-                      width: 102,
-                      backgroundColor: "crimson",
-                      borderRadius: 0,
-                      height: 30,
-                    }}
-                    containerStyle={{
-                      position: "absolute",
-                      bottom: -45,
-                      left: -3,
-                      width: 102,
-                      borderRadius: 0,
-                    }}
-                  />
-
-                  <Badge
-                    status={"primary"}
-                    value={item.groupName}
-                    textStyle={{
-                      color: "white",
-                      fontSize: 14,
-                    }}
-                    badgeStyle={{
-                      width: 103,
-                      backgroundColor: "grey",
-                      borderRadius: 0,
-                      height: 20,
-                    }}
-                    containerStyle={{
-                      position: "absolute",
-                      top: -15,
-                      left: -4,
-                      width: 103,
-                      borderRadius: 0,
-                    }}
-                  />
-
-                  <Badge
-                    status={"success"}
-                    value={
-                      <View style={{ flexDirection: "row" }}>
-                        <Icon
-                          name={
-                            item.gameState.includes("RUNNING")
-                              ? "cards"
-                              : item.gameState.includes("REGISTRATION")
-                              ? "clipboard-text"
-                              : "lock"
-                          }
-                          type="material"
-                          size={20}
-                          color="white"
-                        />
-                      </View>
-                    }
-                    badgeStyle={{
-                      height: 25,
-                      width: 25,
-                      borderRadius: 50,
-                    }}
-                    containerStyle={{
-                      position: "absolute",
-                      top: 5,
-                      left: -10,
-                    }}
-                  />
-
-                  {item.gameState.includes("HIDDEN") ||
-                    (item.gameState.includes("PRIVATE") && (
+                  <View>
+                    {item.hostUid === auth.uid && (
                       <Badge
                         value={
                           <View style={{ flexDirection: "row" }}>
                             <Icon
-                              name={
-                                item.gameState.includes("HIDDEN")
-                                  ? "eye-off"
-                                  : item.gameState.includes("PRIVATE")
-                                  ? "lock"
-                                  : "eye-check"
-                              }
+                              name="shield-account"
                               type="material"
-                              size={20}
+                              size={15}
                               color="white"
                             />
                           </View>
                         }
                         badgeStyle={{
+                          backgroundColor: "lightgrey",
+                        }}
+                        badgeStyle={{
                           height: 25,
                           width: 25,
                           borderRadius: 50,
+                          backgroundColor: "grey",
                         }}
-                        status={"warning"}
                         containerStyle={{
                           position: "absolute",
                           top: 5,
-                          right: 10,
+                          right: -10,
                         }}
                       />
-                    ))}
+                    )}
 
-                  <View style={vs30} />
+                    <Badge
+                      status={"primary"}
+                      value={
+                        <View
+                          style={{ flexDirection: "row", alignItems: "center" }}
+                        >
+                          <Icon
+                            name="cards"
+                            type="material"
+                            size={25}
+                            color="white"
+                          />
 
-                  <View style={{ flexDirection: "row" }}>
-                    <Icon
-                      name="shield-account"
-                      type="material"
-                      size={15}
-                      color="grey"
+                          <Text style={[h7Style, { color: "white" }]}>
+                            {item.gameSettings?.stakes}{" "}
+                            {item.gameSettings?.game}
+                          </Text>
+                        </View>
+                      }
+                      textStyle={{
+                        color: "white",
+                        fontSize: 20,
+                      }}
+                      badgeStyle={{
+                        width: 102,
+                        backgroundColor: "crimson",
+                        borderRadius: 0,
+                        height: 30,
+                      }}
+                      containerStyle={{
+                        position: "absolute",
+                        bottom: -45,
+                        left: -3,
+                        width: 102,
+                        borderRadius: 0,
+                      }}
                     />
 
-                    <Text style={h6Style}>{item.hostedBy}</Text>
-                  </View>
+                    <Badge
+                      status={"primary"}
+                      value={item.groupName}
+                      textStyle={{
+                        color: "white",
+                        fontSize: 14,
+                      }}
+                      badgeStyle={{
+                        width: 103,
+                        backgroundColor: "grey",
+                        borderRadius: 0,
+                        height: 20,
+                      }}
+                      containerStyle={{
+                        position: "absolute",
+                        top: -15,
+                        left: -4,
+                        width: 103,
+                        borderRadius: 0,
+                      }}
+                    />
 
-                  <View style={spacedRow}>
+                    <Badge
+                      status={"success"}
+                      value={
+                        <View style={{ flexDirection: "row" }}>
+                          <Icon
+                            name={
+                              item.gameState.includes("RUNNING")
+                                ? "cards"
+                                : item.gameState.includes("REGISTRATION")
+                                ? "clipboard-text"
+                                : "lock"
+                            }
+                            type="material"
+                            size={20}
+                            color="white"
+                          />
+                        </View>
+                      }
+                      badgeStyle={{
+                        height: 25,
+                        width: 25,
+                        borderRadius: 50,
+                      }}
+                      containerStyle={{
+                        position: "absolute",
+                        top: 5,
+                        left: -10,
+                      }}
+                    />
+
+                    {item.gameState.includes("HIDDEN") ||
+                      (item.gameState.includes("PRIVATE") && (
+                        <Badge
+                          value={
+                            <View style={{ flexDirection: "row" }}>
+                              <Icon
+                                name={
+                                  item.gameState.includes("HIDDEN")
+                                    ? "eye-off"
+                                    : item.gameState.includes("PRIVATE")
+                                    ? "lock"
+                                    : "eye-check"
+                                }
+                                type="material"
+                                size={20}
+                                color="white"
+                              />
+                            </View>
+                          }
+                          badgeStyle={{
+                            height: 25,
+                            width: 25,
+                            borderRadius: 50,
+                          }}
+                          status={"warning"}
+                          containerStyle={{
+                            position: "absolute",
+                            top: 5,
+                            right: 10,
+                          }}
+                        />
+                      ))}
+
+                    <View style={vs30} />
+
                     <View style={{ flexDirection: "row" }}>
                       <Icon
-                        name="calendar-clock"
+                        name="shield-account"
                         type="material"
                         size={15}
                         color="grey"
                       />
 
-                      <Text style={h6Style}>
-                        {format(
-                          parse(
-                            item.gameSettings.venueOpenTime,
-                            "PPPPp",
-                            new Date()
-                          ),
-                          "EEE/MMM/d"
-                        )}
-                      </Text>
+                      <Text style={h6Style}>{item.hostedBy}</Text>
                     </View>
 
-                    <View style={{ flexDirection: "row" }}>
-                      <Icon
-                        name="clock-outline"
-                        type="material"
-                        size={15}
-                        color={
-                          item.gameState.includes("RUNNING") ? "orange" : "grey"
-                        }
-                      />
+                    <View style={spacedRow}>
+                      <View style={{ flexDirection: "row" }}>
+                        <Icon
+                          name="calendar-clock"
+                          type="material"
+                          size={15}
+                          color="grey"
+                        />
 
-                      {item.gameState.includes("RUNNING") ? (
-                        <Text style={[h6Style, { color: "orange" }]}>
-                          {formatDistance(
-                            new Date(Date.now()),
-                            new Date(
-                              parse(
-                                item.gameSettings.venueOpenTime,
-                                "PPPPp",
-                                new Date()
-                              )
-                            ),
-                            { includeSeconds: false }
-                          )}
-                        </Text>
-                      ) : (
                         <Text style={h6Style}>
                           {format(
                             parse(
@@ -783,52 +763,109 @@ const FeedScreen = ({ navigation }) => {
                               "PPPPp",
                               new Date()
                             ),
-                            "p"
+                            "EEE/MMM/d"
                           )}
                         </Text>
+                      </View>
+
+                      <View style={{ flexDirection: "row" }}>
+                        <Icon
+                          name="clock-outline"
+                          type="material"
+                          size={15}
+                          color={
+                            item.gameState.includes("RUNNING")
+                              ? "orange"
+                              : "grey"
+                          }
+                        />
+
+                        {item.gameState.includes("RUNNING") ? (
+                          <Text style={[h6Style, { color: "orange" }]}>
+                            {formatDistance(
+                              new Date(Date.now()),
+                              new Date(
+                                parse(
+                                  item.gameSettings.venueOpenTime,
+                                  "PPPPp",
+                                  new Date()
+                                )
+                              ),
+                              { includeSeconds: false }
+                            )}
+                          </Text>
+                        ) : (
+                          <Text style={h6Style}>
+                            {format(
+                              parse(
+                                item.gameSettings.venueOpenTime,
+                                "PPPPp",
+                                new Date()
+                              ),
+                              "p"
+                            )}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+
+                    <View style={{ flexDirection: "row" }}>
+                      {item.gameState.includes("RUNNING") && (
+                        <Icon
+                          name="poker-chip"
+                          type="material"
+                          size={15}
+                          color="green"
+                        />
+                      )}
+
+                      {item.gameState.includes("RUNNING") ? (
+                        <Text style={[h6Style, { color: "green" }]}>
+                          {item.chipsInPlay}
+                        </Text>
+                      ) : (
+                        <Text style={[h6Style]}>Join!</Text>
                       )}
                     </View>
-                  </View>
 
-                  <View style={{ flexDirection: "row" }}>
-                    {item.gameState.includes("RUNNING") && (
-                      <Icon
-                        name="poker-chip"
-                        type="material"
-                        size={15}
-                        color="green"
+                    <View>
+                      {item.seating?.map((u, i) => {
+                        return (
+                          <Text
+                            key={i}
+                            style={[
+                              h6Style,
+                              { color: u.requested ? "red" : "grey" },
+                            ]}
+                          >
+                            {i + 1}. {u.displayName} {u.requested ? "(R)" : ""}{" "}
+                            {u.late ? `+${u.late}m` : ""}
+                          </Text>
+                        );
+                      })}
+                    </View>
+
+                    <Text style={h6Style}>{`Wait list: ${
+                      item?.waitList?.length || 0
+                    }`}</Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("SnapScreen", {
+                          initialPhotoURL: item.lastSnapPhotoURL,
+                        })
+                      }
+                    >
+                      <Image
+                        containerStyle={{
+                          borderWidth: 3,
+                          borderColor: "orange",
+                        }}
+                        source={{ uri: item.lastSnapPhotoURL }}
+                        style={{ width: 100, height: 100 }}
+                        PlaceholderContent={<ActivityIndicator />}
                       />
-                    )}
-
-                    {item.gameState.includes("RUNNING") ? (
-                      <Text style={[h6Style, { color: "green" }]}>
-                        {item.chipsInPlay}
-                      </Text>
-                    ) : (
-                      <Text style={[h6Style]}>Join!</Text>
-                    )}
+                    </TouchableOpacity>
                   </View>
-
-                  <View>
-                    {item.seating?.map((u, i) => {
-                      return (
-                        <Text
-                          key={i}
-                          style={[
-                            h6Style,
-                            { color: u.requested ? "red" : "grey" },
-                          ]}
-                        >
-                          {i + 1}. {u.displayName} {u.requested ? "(R)" : ""}{" "}
-                          {u.late ? `+${u.late}m` : ""}
-                        </Text>
-                      );
-                    })}
-                  </View>
-
-                  <Text style={h6Style}>{`Wait list: ${
-                    item?.waitList?.length || 0
-                  }`}</Text>
                 </Card>
               </TouchableOpacity>
             );

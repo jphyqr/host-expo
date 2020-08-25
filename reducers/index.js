@@ -23,6 +23,7 @@ import { membersInAreaReducer } from "./membersInAreaReducer";
 import { userPhotosReducer } from "./userPhotosReducer";
 import { overlayReducer } from "./overlayReducer";
 import { userReducer } from "./userReducer";
+import { touchReducer } from "./touchReducer";
 const rootReducer = combineReducers({
   firestore: firestoreReducer,
   firebase: firebaseReducer,
@@ -41,6 +42,7 @@ const rootReducer = combineReducers({
   gameTransactions: gameTransactionsReducer,
   overlay: overlayReducer,
   user: userReducer,
+  touch: touchReducer,
 });
 
 const config = {

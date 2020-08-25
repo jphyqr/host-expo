@@ -26,6 +26,7 @@ export const OVERLAYS = {
   EDIT_PROFILE: "EDIT_PROFILE",
   CHANGE_DISPLAY_NAME: "CHANGE_DISPLAY_NAME",
   CLEAR: "CLEAR",
+  RECORD: "RECORD",
 };
 
 export const SCREEN_TYPE = {
@@ -48,3 +49,24 @@ export const SCREEN_WIDTH_MIN = {
   MEDIUM: 650,
   MOBILE: 0,
 };
+
+export function pow2abs(a, b) {
+  return Math.pow(Math.abs(a - b), 2);
+}
+
+export function getDistance(touches) {
+  console.log("get distancews");
+  const [a, b] = touches;
+
+  if (a == null || b == null) {
+    return 0;
+  }
+  return Math.sqrt(
+    pow2abs(a.locationX, b.locationX) + pow2abs(a.locationY, b.locationY)
+  );
+}
+
+const SCALE_MULTIPLIER = 1.2;
+export default function getScale(currentDistance, initialDistance) {
+  return (currentDistance / initialDistance) * SCALE_MULTIPLIER;
+}

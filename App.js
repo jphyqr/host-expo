@@ -21,7 +21,7 @@ import { TabNavigator, StackNavigator } from "react-navigation";
 import { ReactReduxFirebaseProvider } from "react-redux-firebase";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useRoute } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
@@ -85,6 +85,10 @@ import ProfileAvatar from "./components/ProfileAvatar";
 import EditProfileAvatar from "./components/EditProfileAvatar";
 import { spacedRow } from "./styles/styles";
 import Handle from "./components/Handle";
+import SelectedGameNavHeader from "./components/SelectedGameNavHeader";
+import PanWrapper from "./components/PanWrapper";
+import RecordVideo from "./components/RecordVideo";
+import SnapScreen from "./screens/SnapScreen";
 const App = () => {
   YellowBox.ignoreWarnings(["Setting a timer"]);
   const _console = _.clone(console);
@@ -547,17 +551,39 @@ function WrappedApp({ navigation }) {
     );
   };
 
-  const Feed = ({ route, navigation }) => {
+  const MainApp = ({ route, navigation }) => {
+    const config = {
+      animation: "spring",
+      config: {
+        stiffness: 1000,
+        damping: 500,
+        mass: 3,
+        overshootClamping: true,
+        restDisplacementThreshold: 0.01,
+        restSpeedThreshold: 0.01,
+      },
+    };
+
     return (
       <Stack.Navigator>
         <Stack.Screen
           name="FeedScreen"
           options={{
-            headerRight: () => <Handle />,
-            title: "Private Host",
+            // headerRight: () => <Handle />,
+            title: "",
+            headerTransparent: true,
             headerLeft: () => <ProfileAvatar navigation={navigation} />,
           }}
-          component={FeedScreen}
+          component={HomeTabs}
+        />
+
+        <Stack.Screen
+          options={{
+            gestureDirection: "vertical",
+            headerShown: false,
+          }}
+          name="SnapScreen"
+          component={SnapScreen}
         />
         <Stack.Screen name="GameScreen" component={LiveGameFlow} />
         <Stack.Screen name="GroupScoutScreen" component={GroupScoutScreen} />
@@ -569,12 +595,20 @@ function WrappedApp({ navigation }) {
 
         <Stack.Screen name="CreateGroupFlow" component={CreateGroupFlow} />
 
+        {/* <Stack.Screen
+          options={{
+            headerShown: false,
+          }}
+          name="RecordContent"
+          component={RecordVideo}
+        /> */}
+
         <Stack.Screen
           options={{
             title: `${route?.params?.groupName || "No Name"}`,
             headerBackImage: () => (
               <Ionicons
-                style={{ marginLeft: 5 }}
+                style={{ marginLeft: 10 }}
                 name={"ios-home"}
                 size={30}
                 color={"blue"}
@@ -602,7 +636,36 @@ function WrappedApp({ navigation }) {
 
         <Stack.Screen name="AddMemberScreen" component={AddMemberScreen} />
 
-        <Stack.Screen name="CreateGameFlow" component={CreateGameFlow} />
+        <Stack.Screen
+          name="CreateGameFlow"
+          options={{
+            headerTitle: () => <SelectedGameNavHeader />,
+            headerBackImage: () => (
+              <Ionicons
+                style={{ marginLeft: 5 }}
+                name={"ios-home"}
+                size={30}
+                color={"blue"}
+              />
+            ),
+
+            headerBackTitleVisible: false,
+            headerRight: () => (
+              <MemoAvatar
+                key={"record"}
+                rounded
+                containerStyle={{ marginRight: 10 }}
+                icon={{ name: "camera-alt", size: 30, color: "red" }}
+                size="small"
+                onPress={() => {
+                  // dispatch({ type: SET_OVERLAY, payload: OVERLAYS.RECORD });
+                  navigation.navigate("RecordContent");
+                }}
+              />
+            ),
+          }}
+          component={CreateGameFlow}
+        />
         <Stack.Screen
           name="InviteMembersScreen"
           component={InviteMembersScreen}
@@ -617,7 +680,7 @@ function WrappedApp({ navigation }) {
     );
   };
 
-  const MainClosed = () => {
+  const HomeTabs = ({ route }) => {
     return (
       <Tab.Navigator
         screenOptions={({ route }) => ({
@@ -630,6 +693,8 @@ function WrappedApp({ navigation }) {
               iconName = focused ? "ios-people" : "ios-people";
             } else if (route.name === "ProfileScreen") {
               iconName = focused ? "ios-settings" : "ios-settings";
+            } else if (route.name === "RecordContent") {
+              iconName = focused ? "ios-camera" : "ios-camera";
             }
 
             // You can return any component that you like here!
@@ -639,10 +704,17 @@ function WrappedApp({ navigation }) {
         tabBarOptions={{
           activeTintColor: "tomato",
           inactiveTintColor: "gray",
+          showLabel: false,
         }}
       >
-        <Tab.Screen name="Feed" component={Feed} />
-
+        <Tab.Screen name="Feed" component={FeedScreen} />
+        <Tab.Screen
+          name="RecordContent"
+          options={{
+            tabBarVisible: route?.params?.photoTaken ? false : true,
+          }}
+          component={RecordVideo}
+        />
         <Tab.Screen name="AreaScreen" component={Area} />
         {/* 
         <Tab.Screen name="ProfileScreen" component={Profile} /> */}
@@ -693,8 +765,9 @@ function WrappedApp({ navigation }) {
 
         <DrawerItem
           label="Sign Out"
-          onPress={() => {
-            firebase.auth().signOut();
+          onPress={async () => {
+            await firebase.auth().signOut();
+            navigation.navigate("Auth");
           }}
         />
       </DrawerContentScrollView>
@@ -714,16 +787,16 @@ function WrappedApp({ navigation }) {
     );
   }
 
-  const Main = () => {
+  const RootDrawer = () => {
     return (
       <Drawer.Navigator
-        initialRouteName="Main"
+        initialRouteName="Root"
         openByDefault={false}
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
         <Drawer.Screen
-          name={firebase.auth().currentUser.displayName}
-          component={MainClosed}
+          name={firebase?.auth()?.currentUser?.displayName || "Logged Out"}
+          component={Root}
         />
       </Drawer.Navigator>
     );
@@ -750,8 +823,8 @@ function WrappedApp({ navigation }) {
   //   }
   // }, [auth]);
 
-  return (
-    <NavigationContainer>
+  const Root = () => {
+    return (
       <Tab.Navigator>
         <Tab.Screen
           name="Welcome"
@@ -767,12 +840,14 @@ function WrappedApp({ navigation }) {
         />
         <Tab.Screen
           name="Main"
-          component={Main}
+          component={MainApp}
           options={{ title: () => <Handle />, tabBarVisible: false }}
         />
       </Tab.Navigator>
-    </NavigationContainer>
-  );
+    );
+  };
+
+  return <NavigationContainer>{RootDrawer()}</NavigationContainer>;
 }
 
 const styles = StyleSheet.create({

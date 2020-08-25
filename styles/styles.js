@@ -88,6 +88,11 @@ export const hs30 = {
   minHeight: 30,
 };
 
+export const hs5 = {
+  minWidth: 5,
+  minHeight: 5,
+};
+
 export const vsKeyboard = {
   minHeight: 250,
 };
