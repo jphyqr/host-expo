@@ -182,11 +182,14 @@ const CreateGameScreen = ({ route, navigation }) => {
         console.log("Error updating seating", error);
       }
 
-      disptach({ type: SET_GAME, payload: { updatedGame } });
+      dispatch({ type: SET_GAME, payload: updatedGame });
+
+      dispatch({ type: UPDATE_GAME_S, payload: updatedGame });
     };
     console.log("_seats changed");
-    // if (seatRef.current && _seats !== xGame?.seating?.length) updateSeating();
-    // else seatRef.current = true;
+
+    if (seatRef.current && _seats !== xGame?.seating?.length) updateSeating();
+    else seatRef.current = true;
   }, [_seats]);
 
   useEffect(() => {

@@ -6,12 +6,18 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import * as VideoThumbnails from "expo-video-thumbnails";
 import { Overlay, Image, Input, ListItem } from "react-native-elements";
 import { Camera } from "expo-camera";
 import { TouchableOpacity, ScrollView } from "react-native-gesture-handler";
 import * as Permissions from "expo-permissions";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { SET_OVERLAY, SET_GAME } from "../constants/reducerConstants";
+import {
+  SET_OVERLAY,
+  SET_GAME,
+  UPDATE_A_GAMES_THUMBNAIL,
+} from "../constants/reducerConstants";
 import { OVERLAYS } from "../constants/helperConstants";
 import { useDispatch, useSelector } from "react-redux";
 import { vs10, vs30, hs5, spacedRow, h5Style } from "../styles/styles";
@@ -42,7 +48,9 @@ const RecordVideo = ({ navigation }) => {
   const [_sendTo, setSendTo] = useState([]);
   const [_loading, loading] = useState(false);
   const auth = useSelector((state) => state.firebase.auth || {});
+  const [_thumbnail, setThumbnail] = useState({});
   const xHostGroups = useSelector((state) => state.hostGroups || []);
+  const [_mediaType, setMediaType] = useState("");
   const xMembersInArea = useSelector(
     (state) => state.membersInArea.members || []
   );
@@ -69,6 +77,18 @@ const RecordVideo = ({ navigation }) => {
     });
   });
 
+  const generateThumbnail = async (url) => {
+    try {
+      const { uri } = await VideoThumbnails.getThumbnailAsync(url, {
+        time: 1000,
+      });
+      console.log("thumbnail uri", uri);
+      return uri;
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
   const sendSnap = async () => {
     try {
       loading(true);
@@ -88,6 +108,26 @@ const RecordVideo = ({ navigation }) => {
       });
       let photo = await dispatch(uploadPhotoPreGroup(blob));
 
+      let thumbnail;
+      if (_mediaType === "video") {
+        let thumbUri = await generateThumbnail(photo.url);
+        const thumbBlob = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.onload = function () {
+            resolve(xhr.response);
+          };
+          xhr.onerror = function (e) {
+            console.log(e);
+            reject(new TypeError("Network request failed"));
+          };
+          xhr.responseType = "blob";
+          xhr.open("GET", thumbUri, true);
+          xhr.send(null);
+        });
+        let thumbObj = await dispatch(uploadPhotoPreGroup(thumbBlob));
+        thumbnail = thumbObj.url;
+      } else thumbnail = photo.url;
+
       _sendTo.forEach(async (person) => {
         console.log("send up", person);
 
@@ -96,6 +136,8 @@ const RecordVideo = ({ navigation }) => {
           senderUid: auth.uid,
           type: person.TYPE,
           url: photo.url,
+          thumbnail: thumbnail,
+          mediaType: _mediaType,
           destinationId:
             person.TYPE === "GAME"
               ? person.gameId
@@ -117,6 +159,10 @@ const RecordVideo = ({ navigation }) => {
               "Send Notification From Cloud",
               "color:blue; font-size:15px"
             );
+            await firestore.collection("games").doc(person.gameId).update({
+              lastSnapDate: Date.now(),
+              lastSnapPhotoURL: thumbnail,
+            });
 
             break;
           case "GAME":
@@ -124,9 +170,15 @@ const RecordVideo = ({ navigation }) => {
               "Send Notification From Cloud",
               "color:blue; font-size:15px"
             );
+
+            dispatch({
+              type: UPDATE_A_GAMES_THUMBNAIL,
+              payload: { id: person.gameId, url: thumbnail },
+            });
+
             await firestore.collection("games").doc(person.gameId).update({
               lastSnapDate: Date.now(),
-              lastSnapPhotoURL: photo.url,
+              lastSnapPhotoURL: thumbnail,
             });
             break;
           default:
@@ -252,32 +304,77 @@ const RecordVideo = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={{}}
-            onPress={async () => {
-              if (cameraRef) {
-                let photo = await cameraRef.takePictureAsync();
-                console.log("photo", photo);
+          <View style={spacedRow}>
+            <TouchableOpacity
+              style={{}}
+              onPress={async () => {
+                let permissionResult = await ImagePicker.requestCameraRollPermissionsAsync();
 
-                navigation.navigate("FeedScreen", {
-                  screen: "RecordContent",
-                  photoTaken: true,
+                if (permissionResult.granted === false) {
+                  alert("Permission to access camera roll is required!");
+                  return;
+                }
+
+                let pickerResult = await ImagePicker.launchImageLibraryAsync({
+                  mediaTypes: ImagePicker.MediaTypeOptions.All,
+                  allowsEditing: true,
                 });
 
-                setPhoto(photo);
-              }
-            }}
-          >
-            <View
-              style={{
-                alignSelf: "center",
-                height: 100,
-                width: 100,
-                borderRadius: 100,
-                backgroundColor: "white",
+                //if a video file, should skip ahead to rendering
+
+                console.log({ pickerResult });
+                if (pickerResult.type === "video") {
+                  setFinalURI(pickerResult.uri);
+                }
+
+                setPhoto(pickerResult);
+                setMediaType(pickerResult.type);
               }}
-            ></View>
-          </TouchableOpacity>
+            >
+              <Icon
+                name="content-save-settings"
+                color={_editing ? "red" : "white"}
+                size={35}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{}}
+              onPress={async () => {
+                if (cameraRef) {
+                  let photo = await cameraRef.takePictureAsync();
+                  console.log("photo", photo);
+
+                  navigation.navigate("FeedScreen", {
+                    screen: "RecordContent",
+                    photoTaken: true,
+                  });
+
+                  setPhoto(photo);
+                  setMediaType("image");
+                }
+              }}
+            >
+              <View
+                style={{
+                  alignSelf: "center",
+                  height: 100,
+                  width: 100,
+                  borderRadius: 100,
+                  backgroundColor: "white",
+                }}
+              ></View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{}}
+              onPress={async () => {
+                //LAUNCH photo selector
+              }}
+            >
+              <Icon name="close" color={_editing ? "red" : "white"} size={35} />
+            </TouchableOpacity>
+          </View>
         </Camera>
       ) : _.isEmpty(_finalURI) ? (
         <ImageBackground
@@ -340,6 +437,7 @@ const RecordVideo = ({ navigation }) => {
                     });
 
                     setFinalURI(result);
+
                     console.log("screen shot", result);
                     setProcessing(false);
                   } catch (error) {

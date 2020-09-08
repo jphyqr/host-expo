@@ -49,3 +49,10 @@ export const SET_DISPLAY_NAME = "SET_DISPLAY_NAME";
 export const SET_PHOTO_URL = "SET_PHOTO_URL";
 
 export const SET_TOUCH = "SET_TOUCH";
+
+export const SET_DM = "SET_DM";
+
+export const ADD_URM = "ADD_URM";
+export const REMOVE_URM = "REMOVE_URM";
+
+export const UPDATE_A_GAMES_THUMBNAIL = "UPDATE_A_GAMES_THUMBNAIL";

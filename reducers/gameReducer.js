@@ -6,6 +6,7 @@ import {
   DELETE_GAME,
   SET_GAME_TRANSACTIONS,
   CREATE_GAME_TRANSACTION,
+  UPDATE_A_GAMES_THUMBNAIL,
 } from "../constants/reducerConstants";
 
 export const gameReducer = (state = {}, action) => {
@@ -35,6 +36,20 @@ export const gamesReducer = (state = [], action) => {
     case SET_GAME_S:
       return action.payload;
       break;
+
+    case UPDATE_A_GAMES_THUMBNAIL: {
+      let uGames = [...state];
+      let uGame = uGames.filter((game) => game.id === action.payload.id)[0];
+
+      uGame.lastSnapDate = Date.now();
+      uGame.lastSnapPhotoURL = action.payload.url;
+
+      uGames.filter((game) => game.id !== action.payload.id).unshift(uGame);
+
+      return uGames;
+      break;
+    }
+
     case UPDATE_GAME_S:
       {
         return [

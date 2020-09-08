@@ -24,6 +24,8 @@ import { userPhotosReducer } from "./userPhotosReducer";
 import { overlayReducer } from "./overlayReducer";
 import { userReducer } from "./userReducer";
 import { touchReducer } from "./touchReducer";
+import { dMReducer } from "./dMReducer";
+import { badgeReducer } from "./badgeReducer";
 const rootReducer = combineReducers({
   firestore: firestoreReducer,
   firebase: firebaseReducer,
@@ -43,6 +45,8 @@ const rootReducer = combineReducers({
   overlay: overlayReducer,
   user: userReducer,
   touch: touchReducer,
+  dM: dMReducer,
+  badge: badgeReducer,
 });
 
 const config = {

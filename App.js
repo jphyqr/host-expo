@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Vibration,
   Button,
+  AsyncStorage,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Provider } from "react-redux";
@@ -89,6 +90,10 @@ import SelectedGameNavHeader from "./components/SelectedGameNavHeader";
 import PanWrapper from "./components/PanWrapper";
 import RecordVideo from "./components/RecordVideo";
 import SnapScreen from "./screens/SnapScreen";
+import ChatScreen from "./screens/ChatScreen";
+import SettingsModalScreen from "./screens/SettingsModals/SettingsModalScreen";
+import MessagesScreen from "./screens/MessageTab/MessagesScreen";
+import ChatBubble from "./components/Icons/ChatBubble";
 const App = () => {
   YellowBox.ignoreWarnings(["Setting a timer"]);
   const _console = _.clone(console);
@@ -131,6 +136,7 @@ function WrappedApp({ navigation }) {
   const TopTab = createMaterialTopTabNavigator();
   const firestore = firebase.firestore();
   const dispatch = useDispatch();
+  const auth = useSelector((state) => state.firebase.auth || {});
 
   useEffect(() => {
     let isCancelled = false;
@@ -579,7 +585,14 @@ function WrappedApp({ navigation }) {
 
         <Stack.Screen
           options={{
-            gestureDirection: "vertical",
+            headerShown: false,
+          }}
+          name="ChatScreen"
+          component={ChatScreen}
+        />
+
+        <Stack.Screen
+          options={{
             headerShown: false,
           }}
           name="SnapScreen"
@@ -695,6 +708,8 @@ function WrappedApp({ navigation }) {
               iconName = focused ? "ios-settings" : "ios-settings";
             } else if (route.name === "RecordContent") {
               iconName = focused ? "ios-camera" : "ios-camera";
+            } else if (route.name === "MessagesScreen") {
+              return <ChatBubble />;
             }
 
             // You can return any component that you like here!
@@ -708,6 +723,7 @@ function WrappedApp({ navigation }) {
         }}
       >
         <Tab.Screen name="Feed" component={FeedScreen} />
+        <Tab.Screen name="MessagesScreen" component={MessagesScreen} />
         <Tab.Screen
           name="RecordContent"
           options={{
@@ -766,8 +782,12 @@ function WrappedApp({ navigation }) {
         <DrawerItem
           label="Sign Out"
           onPress={async () => {
+            AsyncStorage.getAllKeys()
+              .then((keys) => AsyncStorage.multiRemove(keys))
+              .then(() => alert("All Keys removed"));
+
             await firebase.auth().signOut();
-            navigation.navigate("Auth");
+            navigation.navigate("Root", { screen: "Auth" });
           }}
         />
       </DrawerContentScrollView>
@@ -794,10 +814,7 @@ function WrappedApp({ navigation }) {
         openByDefault={false}
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
-        <Drawer.Screen
-          name={firebase?.auth()?.currentUser?.displayName || "Logged Out"}
-          component={Root}
-        />
+        <Drawer.Screen name={"Root"} component={RootWithModal} />
       </Drawer.Navigator>
     );
   };
@@ -844,6 +861,20 @@ function WrappedApp({ navigation }) {
           options={{ title: () => <Handle />, tabBarVisible: false }}
         />
       </Tab.Navigator>
+    );
+  };
+  const RootStack = createStackNavigator();
+
+  const RootWithModal = () => {
+    return (
+      <RootStack.Navigator mode="modal">
+        <RootStack.Screen
+          name="Root"
+          component={Root}
+          options={{ headerShown: false }}
+        />
+        <RootStack.Screen name="MyModal" component={SettingsModalScreen} />
+      </RootStack.Navigator>
     );
   };
 

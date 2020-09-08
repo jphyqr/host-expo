@@ -29,6 +29,19 @@ export const OVERLAYS = {
   RECORD: "RECORD",
 };
 
+export const CHANNEL_TYPE = {
+  GAME: "GAME",
+  GROUP: "GROUP",
+  DM: "DM",
+};
+
+export const MEDIA_TYPE = {
+  MESSAGE: "MESSAGE",
+  SNAP: "SNAP",
+  VOTE: "VOTE",
+  GAME_REQUEST: "GAME_REQUEST",
+};
+
 export const SCREEN_TYPE = {
   WIDE: "WIDE",
   MEDIUM: "MEDIUM",
