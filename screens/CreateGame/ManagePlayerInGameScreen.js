@@ -37,6 +37,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import _ from "lodash";
 import { CHIP_TRANSATIONS } from "../../constants/helperConstants";
 import { parse, format } from "date-fns";
+import { renderPlayersStack } from "../../helperFunctions";
 const ManagePlayerInGameScreen = ({ route, navigation }) => {
   const firestore = firebase.firestore();
   const [_game, setGame] = useState({});
@@ -491,8 +492,8 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
             borderRadius: 50,
           }}
           raised
-          type="clear"
-          icon={<Icon name="check" type="material" size={35} color="green" />}
+          type='clear'
+          icon={<Icon name='check' type='material' size={35} color='green' />}
           onPress={() => {
             resolveRequest(true);
           }}
@@ -508,8 +509,8 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
             borderRadius: 50,
           }}
           raised
-          type="clear"
-          icon={<Icon name="close" type="material" size={35} color="red" />}
+          type='clear'
+          icon={<Icon name='close' type='material' size={35} color='red' />}
           onPress={() => {
             resolveRequest(false);
           }}
@@ -523,14 +524,14 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
       element: () => (
         <Button
           raised
-          type="outline"
+          type='outline'
           buttonStyle={{
             backgroundColor: "black",
             padding: 2,
             borderRadius: 50,
           }}
           icon={
-            <Icon name="poker-chip" type="material" size={35} color="white" />
+            <Icon name='poker-chip' type='material' size={35} color='white' />
           }
           onPress={() => {
             addChips(true);
@@ -542,14 +543,14 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
       element: () => (
         <Button
           raised
-          type="clear"
+          type='clear'
           buttonStyle={{
             backgroundColor: "green",
             padding: 2,
             borderRadius: 50,
           }}
           icon={
-            <Icon name="currency-usd" type="material" size={35} color="white" />
+            <Icon name='currency-usd' type='material' size={35} color='white' />
           }
           onPress={() => {
             cashOut(true);
@@ -561,7 +562,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
       element: () => (
         <Button
           raised
-          type="clear"
+          type='clear'
           buttonStyle={{
             backgroundColor: "grey",
             padding: 2,
@@ -573,7 +574,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
                 ? 0.5
                 : 1,
           }}
-          icon={<Icon name="seat" type="material" size={35} color="white" />}
+          icon={<Icon name='seat' type='material' size={35} color='white' />}
           onPress={
             _game?.members[`${xMember.id}`]?.borrowed?.length > 0 ||
             _game?.members[`${xMember.id}`]?.bought?.length > 0
@@ -683,19 +684,6 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
     return days + games + stakes;
   };
 
-  const renderPlayersStack = (borrowed = [], bought = []) => {
-    let total = 0;
-
-    for (const b of borrowed) {
-      total = parseInt(total) + parseInt(b.amount);
-    }
-    for (const t of bought) {
-      total = parseInt(total) + parseInt(t.amount);
-    }
-
-    return total;
-  };
-
   const updateIfANumber = async (value, fn, min = 9999999999) => {
     console.log("UPDATEIFMATCHES", value);
     if (value) {
@@ -718,31 +706,31 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
           leftIcon={
             u.chipTransactionType === CHIP_TRANSATIONS.PAY_OUT ? (
               <Icon
-                name="currency-usd"
-                type="material"
+                name='currency-usd'
+                type='material'
                 size={20}
-                color="grey"
+                color='grey'
               />
             ) : u.chipTransactionType === CHIP_TRANSATIONS.RECLAIM ? (
-              <Icon name="poker-chip" type="material" size={20} color="grey" />
+              <Icon name='poker-chip' type='material' size={20} color='grey' />
             ) : u.chipTransactionType === CHIP_TRANSATIONS.BACKPAY ? (
               <Icon
-                name="currency-usd"
-                type="material"
+                name='currency-usd'
+                type='material'
                 size={20}
-                color="grey"
+                color='grey'
               />
             ) : u.chipTransactionType === CHIP_TRANSATIONS.CARRY ? (
               <Icon
-                name="currency-usd"
-                type="material"
+                name='currency-usd'
+                type='material'
                 size={20}
-                color="grey"
+                color='grey'
               />
             ) : u.chipTransactionType === CHIP_TRANSATIONS.BUY ? (
-              <Icon name="poker-chip" type="material" size={20} color="grey" />
+              <Icon name='poker-chip' type='material' size={20} color='grey' />
             ) : u.chipTransactionType === CHIP_TRANSATIONS.BORROW ? (
-              <Icon name="poker-chip" type="material" size={20} color="grey" />
+              <Icon name='poker-chip' type='material' size={20} color='grey' />
             ) : null
           }
           titleStyle={[moneyText, { color: "grey" }]}
@@ -777,8 +765,8 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
     <ScrollView>
       <Overlay
         isVisible={_showCashOut}
-        windowBackgroundColor="rgba(255, 255, 255, .5)"
-        overlayBackgroundColor="red"
+        windowBackgroundColor='rgba(255, 255, 255, .5)'
+        overlayBackgroundColor='red'
         fullScreen
       >
         <View style={vs30} />
@@ -805,7 +793,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
         >{`Chips Cashed out (${_game.chipsInPlay} in play)`}</Text>
         <Input
           value={_chipsCashedOut.toString()}
-          leftIcon={<Icon name="poker-chip" size={24} color="black" />}
+          leftIcon={<Icon name='poker-chip' size={24} color='black' />}
           onChangeText={(p) => {
             let input;
             if (Number.isNaN(parseInt(p))) {
@@ -869,7 +857,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
                     )
                 );
               }}
-              leftIcon={<Icon name="arrow-left" size={24} color="black" />}
+              leftIcon={<Icon name='arrow-left' size={24} color='black' />}
             />
           )}
 
@@ -877,7 +865,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
           {_memberGroupBalance > 0 && (
             <Input
               value={_backpay.toString(10)}
-              leftIcon={<Icon name="currency-usd" size={24} color="black" />}
+              leftIcon={<Icon name='currency-usd' size={24} color='black' />}
               onChangeText={(p) => {
                 let input;
                 if (Number.isNaN(parseInt(p))) {
@@ -913,7 +901,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
           </View>
           <Input
             value={_payout.toString(10)}
-            leftIcon={<Icon name="currency-usd" size={24} color="black" />}
+            leftIcon={<Icon name='currency-usd' size={24} color='black' />}
             onChangeText={(p) =>
               updateIfANumber(
                 p,
@@ -926,8 +914,8 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
 
         <View style={averageRow}>
           <Button
-            title="Cancel"
-            type="outline"
+            title='Cancel'
+            type='outline'
             onPress={() => cashOut(false)}
           ></Button>
           <Button
@@ -949,8 +937,8 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
 
       <Overlay
         isVisible={_showAddChips}
-        windowBackgroundColor="rgba(255, 255, 255, .5)"
-        overlayBackgroundColor="red"
+        windowBackgroundColor='rgba(255, 255, 255, .5)'
+        overlayBackgroundColor='red'
         fullScreen
       >
         <View style={vs30} />
@@ -963,18 +951,18 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
 
         <View style={spacedRow}>
           <Input
-            placeholder="Chips"
+            placeholder='Chips'
             value={_chips.toString(10)}
-            leftIcon={<Icon name="poker-chip" size={24} color="black" />}
+            leftIcon={<Icon name='poker-chip' size={24} color='black' />}
             onChangeText={(p) => updateIfANumber(p, setChips)}
           />
           <CheckBox
-            title="Borrowed"
+            title='Borrowed'
             checked={_borrowed}
             onPress={() => setBorrowed(!_borrowed)}
           />
           <CheckBox
-            title="Paid"
+            title='Paid'
             checked={!_borrowed}
             onPress={() => setBorrowed(!_borrowed)}
           />
@@ -984,13 +972,13 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
 
         <View style={averageRow}>
           <Button
-            title="Cancel"
-            type="outline"
+            title='Cancel'
+            type='outline'
             onPress={() => addChips(false)}
           ></Button>
           <Button
             loading={_addingChips}
-            title="Add Chips"
+            title='Add Chips'
             disabled={_chips < 1}
             onPress={handleAddChips}
           ></Button>
@@ -1013,7 +1001,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
             Chips in Play
           </Text>
 
-          <Icon name="poker-chip" type="material" size={15} color="grey" />
+          <Icon name='poker-chip' type='material' size={15} color='grey' />
           <Text style={[moneyText, { color: "grey", marginLeft: 5 }]}>
             {_game.chipsInPlay || 0}
           </Text>
@@ -1028,7 +1016,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
                 _game?.members[`${mId}`]?.bought?.length > 0
             ).length > 0
           }
-          title="End Game"
+          title='End Game'
         ></Button>
       </View>
 
@@ -1046,10 +1034,10 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
               ) : (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Icon
-                    name="poker-chip"
-                    type="material"
+                    name='poker-chip'
+                    type='material'
                     size={15}
-                    color="green"
+                    color='green'
                   />
                   <Text style={moneyText}>
                     {renderPlayersStack(
@@ -1062,7 +1050,7 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
             }
             leftIcon={
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Icon name="seat" type="material" size={20} color="grey" />
+                <Icon name='seat' type='material' size={20} color='grey' />
                 <Text style={[moneyText, { color: "grey" }]}>{i + 1}</Text>
               </View>
             }
@@ -1099,25 +1087,25 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
         ) : _.isEmpty(_member) ? (
           <ListItem
             title={`Seat ${i + 1}`}
-            subtitle="No Member Selected"
+            subtitle='No Member Selected'
           ></ListItem>
         ) : (
           <Button
             key={i}
             titleStyle={[h7Style, { color: "grey" }]}
-            type="clear"
+            type='clear'
             iconRight
             title={`Move ${xMember.displayName} to ${i + 1}`}
-            icon={<Icon name="seat" type="material" size={20} color="grey" />}
+            icon={<Icon name='seat' type='material' size={20} color='grey' />}
             onPress={() => updateSeating(i)}
           />
         );
       })}
 
       <Button
-        icon={<Icon name="plus" size={15} color="blue" />}
-        type="outline"
-        title="Add To Waitlist"
+        icon={<Icon name='plus' size={15} color='blue' />}
+        type='outline'
+        title='Add To Waitlist'
         onPress={
           _game?.members[`${xMember.id}`]?.borrowed?.length > 0 ||
           _game?.members[`${xMember.id}`]?.bought?.length > 0
@@ -1149,19 +1137,19 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
               })
             }
             title={`${i + 1}. ${u.displayName}`}
-            leftIcon={<Icon name="clock" size={15} />}
+            leftIcon={<Icon name='clock' size={15} />}
             leftAvatar={{ size: "small", source: { uri: u?.photoURL } }}
             rightElement={
               <Button
                 icon={
                   <Icon
-                    name="arrow-up"
-                    type="material"
+                    name='arrow-up'
+                    type='material'
                     size={15}
-                    color="grey"
+                    color='grey'
                   />
                 }
-                type="outline"
+                type='outline'
                 onPress={() => moveUpOnWaitList(i)}
               />
             }
@@ -1182,45 +1170,45 @@ const ManagePlayerInGameScreen = ({ route, navigation }) => {
               leftIcon={
                 u.chipTransactionType === CHIP_TRANSATIONS.PAY_OUT ? (
                   <Icon
-                    name="currency-usd"
-                    type="material"
+                    name='currency-usd'
+                    type='material'
                     size={20}
-                    color="grey"
+                    color='grey'
                   />
                 ) : u.chipTransactionType === CHIP_TRANSATIONS.RECLAIM ? (
                   <Icon
-                    name="poker-chip"
-                    type="material"
+                    name='poker-chip'
+                    type='material'
                     size={20}
-                    color="grey"
+                    color='grey'
                   />
                 ) : u.chipTransactionType === CHIP_TRANSATIONS.BACKPAY ? (
                   <Icon
-                    name="currency-usd"
-                    type="material"
+                    name='currency-usd'
+                    type='material'
                     size={20}
-                    color="grey"
+                    color='grey'
                   />
                 ) : u.chipTransactionType === CHIP_TRANSATIONS.CARRY ? (
                   <Icon
-                    name="currency-usd"
-                    type="material"
+                    name='currency-usd'
+                    type='material'
                     size={20}
-                    color="grey"
+                    color='grey'
                   />
                 ) : u.chipTransactionType === CHIP_TRANSATIONS.BUY ? (
                   <Icon
-                    name="poker-chip"
-                    type="material"
+                    name='poker-chip'
+                    type='material'
                     size={20}
-                    color="grey"
+                    color='grey'
                   />
                 ) : u.chipTransactionType === CHIP_TRANSATIONS.BORROW ? (
                   <Icon
-                    name="poker-chip"
-                    type="material"
+                    name='poker-chip'
+                    type='material'
                     size={20}
-                    color="grey"
+                    color='grey'
                   />
                 ) : null
               }

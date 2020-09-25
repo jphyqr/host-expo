@@ -11,11 +11,11 @@ const GameSettings = ({ navigation }) => {
   return (
     <View>
       <Text>Group</Text>
-      <Text>{xGame.gameSettings.title}</Text>
+      <Text>{xGame?.gameSettings?.title}</Text>
 
       {xGame.hostUid === firebase.auth().currentUser.uid && (
         <Button
-          title="Manage Game"
+          title='Manage Game'
           onPress={() => {
             navigation.navigate("CreateGameFlow", {
               hostUid: xGame.hostUid,
@@ -31,7 +31,7 @@ const GameSettings = ({ navigation }) => {
       )}
 
       <Button
-        title="view game"
+        title='view game'
         onPress={() => {
           navigation.navigate("GameScreen", {
             hostUid: xGame.hostUid,

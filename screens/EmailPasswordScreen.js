@@ -31,6 +31,7 @@ const EmailPasswordScreen = ({ navigation }) => {
       navigation.navigate("Main");
       setUpdating(false);
     } catch (error) {
+      console.log('error logging in', error)
       setUpdating(false);
       setError(true);
       errorText(error);
@@ -53,6 +54,9 @@ const EmailPasswordScreen = ({ navigation }) => {
         placeholder="password"
         secureTextEntry
         onChangeText={(password) => setPassword(password)}
+        errorMessage={_error}
+        errorText={_errorText}
+        
       />
 
       <Button

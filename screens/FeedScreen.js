@@ -194,6 +194,7 @@ const FeedScreen = ({ navigation }) => {
       other_users_in_area,
       user_photos,
     } = data || [];
+    loading(true);
 
     dispatch({ type: SET_USER_PHOTOS, payload: user_photos });
 
@@ -225,7 +226,15 @@ const FeedScreen = ({ navigation }) => {
     setCount(count + 1);
 
     dispatch({ type: SET_GAME_S, payload: games });
+    loading(false);
   };
+
+  const feedFocus = navigation.addListener("focus", (e) => {
+    dispatch({
+      type: SET_GAME,
+      payload: {},
+    });
+  });
 
   useEffect(() => {
     console.log("UE 1 CHANGED");
@@ -316,7 +325,12 @@ const FeedScreen = ({ navigation }) => {
   }, []);
 
   if (!auth.isLoaded || !profile.isLoaded || _loading)
-    return <ActivityIndicator />;
+    return (
+      <Overlay isVisible={true}>
+        <Text>Loading Games</Text>
+        <ActivityIndicator />
+      </Overlay>
+    );
 
   return (
     <ScrollView
@@ -386,7 +400,7 @@ const FeedScreen = ({ navigation }) => {
                     }}
                     source={{ uri: item?.groupPhotoURL }}
                     updateOn={item?.groupPhotoURL}
-                    size="large"
+                    size='large'
                     overlayContainerStyle={{ backgroundColor: "blue" }}
                     onPress={async () => {
                       try {
@@ -428,7 +442,7 @@ const FeedScreen = ({ navigation }) => {
                     }}
                     source={{ uri: item?.groupPhotoURL }}
                     updateOn={item?.groupPhotoURL}
-                    size="large"
+                    size='large'
                     overlayContainerStyle={{ backgroundColor: "blue" }}
                     onPress={() =>
                       navigation.navigate("ChatScreen", {
@@ -451,7 +465,7 @@ const FeedScreen = ({ navigation }) => {
                     rounded
                     source={{ uri: item?.groupPhotoURL }}
                     updateOn={item?.groupPhotoURL}
-                    size="large"
+                    size='large'
                     overlayContainerStyle={{ backgroundColor: "blue" }}
                     showAccessory
                     accessory={{
@@ -546,26 +560,31 @@ const FeedScreen = ({ navigation }) => {
       </View>
 
       <View style={vs30} />
-      <ScrollView style={{ padding: 0, margin: 0 }} horizontal>
-        {_gamesLive
-          .sort(
-            (a, b) =>
-              parse(a.gameSettings.venueOpenTime, "PPPPp", new Date()) -
-              parse(b.gameSettings.venueOpenTime, "PPPPp", new Date())
-          )
-          .map((item, i) => {
-            return (
-              <GameCard
-                auth={auth}
-                i={i}
-                handleClickGame={handleClickGame}
-                navigation={navigation}
-                id={item.id}
-                key={i}
-              />
-            );
-          })}
-      </ScrollView>
+
+      {_.isEmpty(_gamesLive) ? (
+        <Text>No Games</Text>
+      ) : (
+        <ScrollView style={{ padding: 0, margin: 0 }} horizontal>
+          {_gamesLive
+            .sort(
+              (a, b) =>
+                parse(a?.gameSettings?.venueOpenTime, "PPPPp", new Date()) -
+                parse(b?.gameSettings?.venueOpenTime, "PPPPp", new Date())
+            )
+            .map((item, i) => {
+              return (
+                <GameCard
+                  auth={auth}
+                  i={i}
+                  handleClickGame={handleClickGame}
+                  navigation={navigation}
+                  id={item.id}
+                  key={i}
+                />
+              );
+            })}
+        </ScrollView>
+      )}
     </ScrollView>
   );
 };

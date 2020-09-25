@@ -7,9 +7,14 @@ import {
   Badge,
   Overlay,
   Image,
+  Button,
 } from "react-native-elements";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
+import {
+  ScrollView,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from "react-native-gesture-handler";
 import {
   h7Style,
   vs30,
@@ -87,7 +92,11 @@ const GameCard = ({ auth, id, navigation, i, handleClickGame }) => {
     return (
       <Card
         containerStyle={{
-          width: 140,
+          width: 160,
+          margin: 10,
+          height: 411,
+          marginTop: 0,
+          padding: 0,
           backgroundColor: "white",
           borderRadius: 5,
           shadowColor: "#000",
@@ -108,203 +117,132 @@ const GameCard = ({ auth, id, navigation, i, handleClickGame }) => {
   //to something grey
 
   return (
-    <TouchableOpacity
-      key={i}
-      onPress={() =>
-        navigation.navigate("ChatScreen", {
-          channelName: _game.gameSettings.title,
-          channelPhotoURL: _game.groupPhotoURL,
-          channelMembers: {},
-          channelType: CHANNEL_TYPE.GAME,
-          channelId: _game.id,
-        })
-      }
-      onLongPress={() => {
-        dispatch({ type: SET_GAME, payload: _game });
-
-        navigation.navigate("MyModal", {
-          channelType: CHANNEL_TYPE.GAME,
-        });
+    <Card
+      containerStyle={{
+        width: 160,
+        margin: 10,
+        marginTop: 0,
+        padding: 0,
+        backgroundColor: "white",
+        borderRadius: 5,
+        shadowColor: "#000",
+        shadowOffset: { width: 1, height: 2 },
+        shadowOpacity: 0.6,
+        shadowRadius: 1.5,
+        padding: 2,
       }}
     >
-      <Card
-        containerStyle={{
-          width: 140,
-          margin: 10,
-          marginTop: 0,
-          padding: 0,
-          backgroundColor: "white",
-          borderRadius: 5,
-          shadowColor: "#000",
-          shadowOffset: { width: 1, height: 2 },
-          shadowOpacity: 0.6,
-          shadowRadius: 1.5,
-          padding: 2,
+      <View
+        onLayout={(event) => {
+          console.log("card height", event.nativeEvent.layout.height);
         }}
       >
-        <View>
-          {/* {_game.hostUid === auth.uid && (
-            <Badge
-              value={
-                <View style={{ flexDirection: "row" }}>
-                  <Icon
-                    name="shield-account"
-                    type="material"
-                    size={15}
-                    color="white"
-                  />
-                </View>
-              }
-              badgeStyle={{
-                backgroundColor: "lightgrey",
-              }}
-              badgeStyle={{
-                height: 25,
-                width: 25,
-                borderRadius: 50,
-                backgroundColor: "grey",
-              }}
-              containerStyle={{
-                position: "absolute",
-                top: 5,
-                right: -10,
-              }}
-            />
-          )} */}
+        <View style={[spacedRow]}>
+          <TouchableOpacity
+            onPress={async () => {
+              // handleClickGame(_game);
+              navigation.navigate("SnapScreen", {
+                destinationId: _game.id,
+              });
+            }}
+          >
+            {_game.lastSnapPhotoURL ? (
+              <StoryAvatar
+                label={_game.groupName}
+                rounded
+                source={{ uri: _game?.lastSnapPhotoURL }}
+                updateOn={_game?.lastSnapPhotoURL}
+                size='large'
+                overlayContainerStyle={{ backgroundColor: "blue" }}
+              />
+            ) : (
+              <StoryAvatar
+                label={_game.groupName}
+                rounded
+                source={{ uri: _game?.groupPhotoURL }}
+                updateOn={_game?.groupPhotoURL}
+                size='large'
+                overlayContainerStyle={{ backgroundColor: "blue" }}
+              />
+            )}
+          </TouchableOpacity>
 
-          {/* <Badge
-            status={"primary"}
-            value={
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Icon name="cards" type="material" size={25} color="white" />
+          <TouchableOpacity
+            onPress={() => {
+              dispatch({ type: SET_GAME, payload: _game });
 
-                <Text style={[h7Style, { color: "white" }]}>
-                  {_game.gameSettings?.stakes} {_game.gameSettings?.game}
-                </Text>
-              </View>
-            }
-            textStyle={{
-              color: "white",
-              fontSize: 20,
+              navigation.navigate("GameModal", {
+                title: "no title",
+              });
             }}
-            badgeStyle={{
-              width: 102,
-              backgroundColor: "crimson",
-              borderRadius: 0,
-              height: 30,
-            }}
-            containerStyle={{
-              position: "absolute",
-              bottom: -45,
-              left: -3,
-              width: 102,
-              borderRadius: 0,
-              zIndex: 30,
-            }}
-          /> */}
-          {/* 
-          <Badge
-            status={"primary"}
-            value={_game.groupName}
-            textStyle={{
-              color: "white",
-              fontSize: 14,
-            }}
-            badgeStyle={{
-              width: 103,
-              backgroundColor: "grey",
-              borderRadius: 0,
-              height: 20,
-            }}
-            containerStyle={{
-              position: "absolute",
-              top: -15,
-              left: -4,
-              width: 103,
-              borderRadius: 0,
-            }}
-          /> */}
-          {/* 
-          <Badge
-            status={"success"}
-            value={
-              <View style={{ flexDirection: "row" }}>
-                <Icon
-                  name={
-                    _game.gameState.includes("RUNNING")
-                      ? "cards"
-                      : _game.gameState.includes("REGISTRATION")
-                      ? "clipboard-text"
-                      : "lock"
-                  }
-                  type="material"
-                  size={20}
-                  color="white"
-                />
-              </View>
-            }
-            badgeStyle={{
-              height: 25,
-              width: 25,
-              borderRadius: 50,
-            }}
-            containerStyle={{
-              position: "absolute",
-              top: 5,
-              left: -10,
-            }}
-          /> */}
+          >
+            <View
+              style={{
+                justifyContent: "space-between",
+                width: 75,
+                height: 90,
+                borderColor: "grey",
+                borderWidth: 2,
+                borderRadius: 10,
+              }}
+            >
+              <Text style={[h5Style, { color: "black" }]}>
+                {_game.gameSettings.stakes} {_game.gameSettings.game}
+              </Text>
 
-          {/* {_game.gameState.includes("HIDDEN") ||
-            (_game.gameState.includes("PRIVATE") && (
-              <Badge
-                value={
+              <Text style={h7Style}>
+                {format(
+                  parse(_game.gameSettings.venueOpenTime, "PPPPp", new Date()),
+                  "EEE/MMM/d"
+                )}
+              </Text>
+
+              <View>
+                {_game.gameState.includes("RUNNING") ? (
+                  <Text
+                    style={[
+                      h6Style,
+                      { width: "100%", textAlign: "center", color: "orange" },
+                    ]}
+                  >
+                    Game Running
+                  </Text>
+                ) : (
                   <View style={{ flexDirection: "row" }}>
                     <Icon
-                      name={
-                        _game.gameState.includes("HIDDEN")
-                          ? "eye-off"
-                          : _game.gameState.includes("PRIVATE")
-                          ? "lock"
-                          : "eye-check"
+                      name='clock-outline'
+                      type='material'
+                      size={15}
+                      color={
+                        _game.gameState.includes("RUNNING") ? "orange" : "grey"
                       }
-                      type="material"
-                      size={20}
-                      color="white"
+                      name={
+                        _game.gameState.includes("RUNNING")
+                          ? "cards"
+                          : "clock-outline"
+                      }
                     />
+
+                    <Text style={h6Style}>
+                      {format(
+                        parse(
+                          _game.gameSettings.venueOpenTime,
+                          "PPPPp",
+                          new Date()
+                        ),
+                        "p"
+                      )}
+                    </Text>
                   </View>
-                }
-                badgeStyle={{
-                  height: 25,
-                  width: 25,
-                  borderRadius: 50,
-                }}
-                status={"warning"}
-                containerStyle={{
-                  position: "absolute",
-                  top: 5,
-                  right: 10,
-                }}
-              />
-            ))} */}
-          <View style={[spacedRow]}>
-            <MemoAvatar
-              label={_game.groupName}
-              rounded
-              source={{ uri: _game?.groupPhotoURL }}
-              updateOn={_game?.groupPhotoURL}
-              size="small"
-              overlayContainerStyle={{ backgroundColor: "blue" }}
-            />
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
 
-            <Text style={[h5Style]}>
-              {_game.gameSettings.stakes} {_game.gameSettings.game}
-            </Text>
-          </View>
+        <View style={vs10} />
 
-          <View style={vs10} />
-
-          <View style={{ flexDirection: "row" }}>
+        {/* <View style={{ flexDirection: "row" }}>
             <Icon
               name="shield-account"
               type="material"
@@ -313,25 +251,10 @@ const GameCard = ({ auth, id, navigation, i, handleClickGame }) => {
             />
 
             <Text style={h6Style}>{_game.hostedBy}</Text>
-          </View>
+          </View> */}
 
-          <View style={spacedRow}>
-            <View style={{ flexDirection: "row" }}>
-              <Icon
-                name="calendar-clock"
-                type="material"
-                size={15}
-                color="grey"
-              />
-
-              <Text style={h6Style}>
-                {format(
-                  parse(_game.gameSettings.venueOpenTime, "PPPPp", new Date()),
-                  "EEE/MMM/d"
-                )}
-              </Text>
-            </View>
-            <Text style={h6Style}>
+        <View style={spacedRow}>
+          {/* <Text style={h6Style}>
               {formatDistance(
                 new Date(Date.now()),
                 new Date(
@@ -339,79 +262,78 @@ const GameCard = ({ auth, id, navigation, i, handleClickGame }) => {
                 ),
                 { includeSeconds: false }
               )}
-            </Text>
-            <View style={{ flexDirection: "row" }}>
-              <Icon
-                name="clock-outline"
-                type="material"
-                size={15}
-                color={_game.gameState.includes("RUNNING") ? "orange" : "grey"}
-              />
+            </Text> */}
+        </View>
 
-              {_game.gameState.includes("RUNNING") ? (
-                <Text style={[h6Style, { color: "orange" }]}>
-                  {formatDistance(
-                    new Date(Date.now()),
-                    new Date(
-                      parse(
-                        _game.gameSettings.venueOpenTime,
-                        "PPPPp",
-                        new Date()
-                      )
-                    ),
-                    { includeSeconds: false }
-                  )}
-                </Text>
-              ) : (
-                <Text style={h6Style}>
-                  {format(
-                    parse(
-                      _game.gameSettings.venueOpenTime,
-                      "PPPPp",
-                      new Date()
-                    ),
-                    "p"
-                  )}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          <View style={{ flexDirection: "row" }}>
-            {_game.gameState.includes("RUNNING") && (
-              <Icon name="poker-chip" type="material" size={15} color="green" />
-            )}
-
+        {/* <View style={{ flexDirection: "row", width:"100%" , flexGrow:1}}>
+     
             {_game.gameState.includes("RUNNING") ? (
-              <Text style={[h6Style, { color: "green" }]}>
-                {_game.chipsInPlay}
-              </Text>
+             
+              <Button title="Grab Seat"  onPress={()=>console.log('button press')} containerStyle={{width:"100%"}}  buttonStyle={{backgroundColor:"green"}}/>
             ) : (
-              <Text style={[h6Style]}>Join!</Text>
+              <Button title="Register"  containerStyle={{width:"100%"}} buttonStyle={{backgroundColor:"black"}}/>
             )}
-          </View>
+          </View> */}
+        <View
+          style={{
+            position: "relative",
+            height: 150,
+            borderRadius: 10,
+            backgroundColor: "lightgrey",
+          }}
+        >
+          <Icon
+            style={{ position: "absolute", opacity: 0.5, right: 0, top: 50 }}
+            name='play'
+            size={50}
+          />
 
-          <View>
-            {_game.seating?.map((u, i) => {
-              return (
-                <Text
-                  key={i}
-                  style={[h6Style, { color: u.requested ? "red" : "grey" }]}
-                >
-                  {i + 1}. {u.displayName} {u.requested ? "(R)" : ""}{" "}
-                  {u.late ? `+${u.late}m` : ""}
-                </Text>
-              );
-            })}
+          <ScrollView>
+            <TouchableWithoutFeedback
+              onPress={() => {
+                navigation.navigate("GameScreen", {
+                  hostUid: _game.hostUid,
+                  gameState: _game.gameState,
+                  gameName: _game.gameSettings.title,
+                });
+              }}
+            >
+              <View>
+                {_game.seating?.map((u, i) => {
+                  return (
+                    <Text
+                      key={i}
+                      style={[
+                        h5Style,
+                        { color: u.requested ? "red" : "black" },
+                      ]}
+                    >
+                      {i + 1}. {u.displayName} {u.requested ? "(R)" : ""}{" "}
+                      {u.late ? `+${u.late}m` : ""}
+                    </Text>
+                  );
+                })}
 
-            {renderSpaceHolders()}
-          </View>
+                {_game.waitList?.map((u, i) => {
+                  return (
+                    <Text
+                      key={i}
+                      style={[
+                        h5Style,
+                        { color: u.requested ? "red" : "black" },
+                      ]}
+                    >
+                      Wait{i + 1}. {u.displayName} {u.requested ? "(R)" : ""}{" "}
+                      {u.late ? `+${u.late}m` : ""}
+                    </Text>
+                  );
+                })}
+              </View>
+            </TouchableWithoutFeedback>
+          </ScrollView>
+        </View>
 
-          <Text style={h6Style}>{`Wait list: ${
-            _game?.waitList?.length || 0
-          }`}</Text>
-
-          {/* <TouchableOpacity
+        {/* <TouchableOpacity
             onPress={() =>
               navigation.navigate("ChatScreen", {
                 channelName: _game.gameSettings.title,
@@ -422,50 +344,28 @@ const GameCard = ({ auth, id, navigation, i, handleClickGame }) => {
               })
             }
           > */}
-          {_.isEmpty(_game) ? (
-            <ActivityIndicator />
-          ) : (
-            <ChatPreview gameId={_game?.id} />
-          )}
-          {/* </TouchableOpacity> */}
-
-          <TouchableOpacity
-            onPress={async () => {
-              handleClickGame(_game);
-              navigation.navigate("SnapScreen", {
-                destinationId: _game.id,
-              });
-            }}
-          >
-            {_game.lastSnapPhotoURL ? (
-              <Image
-                containerStyle={{
-                  backgroundColor: "white",
-                  // borderWidth: 3,
-                  // borderColor: _game.testChange ? "orange" : "red",
-                }}
-                source={{ uri: _game.lastSnapPhotoURL }}
-                style={{ width: 140, height: 140 }}
-                PlaceholderContent={<ActivityIndicator />}
-              />
-            ) : (
-              <Image
-                containerStyle={{
-                  backgroundColor: "white",
-                  // borderWidth: 3,
-                  // borderColor: _game.testChange ? "orange" : "red",
-                }}
-                placeholderStyle={{
-                  backgroundColor: "white",
-                }}
-                source={{ uri: _game.lastSnapPhotoURL }}
-                style={{ width: 140, height: 140 }}
-              />
-            )}
-          </TouchableOpacity>
-        </View>
-      </Card>
-    </TouchableOpacity>
+        <View style={vs10} />
+        {_.isEmpty(id) ? (
+          <ActivityIndicator />
+        ) : (
+          <TouchableWithoutFeedback onLongPress={() => console.log("pressed")}>
+            <ChatPreview
+              gameId={id}
+              onWindowPress={() =>
+                navigation.navigate("ChatScreen", {
+                  channelName: _game.gameSettings.title,
+                  channelPhotoURL: _game.groupPhotoURL,
+                  channelMembers: {},
+                  channelType: CHANNEL_TYPE.GAME,
+                  channelId: _game.id,
+                })
+              }
+            />
+          </TouchableWithoutFeedback>
+        )}
+        {/* </TouchableOpacity> */}
+      </View>
+    </Card>
   );
 };
 

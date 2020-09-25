@@ -83,3 +83,16 @@ const SCALE_MULTIPLIER = 1.2;
 export default function getScale(currentDistance, initialDistance) {
   return (currentDistance / initialDistance) * SCALE_MULTIPLIER;
 }
+
+export const tenPlayerPositions = [
+  { seatName: 1, top: 140, left: 85 },
+  { seatName: 2, top: 120, left: -5 },
+  { seatName: 3, top: 40, left: -30 },
+  { seatName: 4, top: -40, left: 10 },
+  { seatName: 5, top: -40, left: 90 },
+  { seatName: 6, top: -40, left: 175 },
+  { seatName: 7, top: -40, left: 265 },
+  { seatName: 8, top: 40, left: 310 },
+  { seatName: 9, top: 120, left: 275 },
+  { seatName: 10, top: 140, left: 175 },
+];

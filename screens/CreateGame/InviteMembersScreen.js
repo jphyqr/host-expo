@@ -34,7 +34,7 @@ const InviteMembersScreen = ({ navigation }) => {
     try {
       let updateGame = { ...xGame };
 
-      let uMembers = xGroup.members;
+      let uMembers = xGame.members;
       console.log({ uMembers });
       Object.keys(uMembers).map((id, i) => {
         if (_inviteList.filter((i) => i.id === id).length > 0) {
@@ -116,13 +116,13 @@ const InviteMembersScreen = ({ navigation }) => {
         ></Button>
       </View>
 
-      {xGroup?.members &&
-        Object.keys(xGroup?.members)?.map((id, i) => {
+      {xGame?.members &&
+        Object.keys(xGame?.members)?.map((id, i) => {
           return (
             <ListItem
               key={i}
               subtitle={
-                id === xGroup?.hostUid
+                id === xGame?.hostUid
                   ? "Host"
                   : _game?.seating?.filter((s) => s.uid === id).length > 0
                   ? `Seat ${_game?.seating?.map((e) => e.uid).indexOf(id) + 1}`
@@ -134,9 +134,9 @@ const InviteMembersScreen = ({ navigation }) => {
                   : "Not invited yet"
               }
               leftAvatar={{
-                source: { uri: xGroup?.members[`${id}`]?.photoURL },
+                source: { uri: xGame?.members[`${id}`]?.photoURL },
               }}
-              title={xGroup?.members[`${id}`]?.displayName}
+              title={xGame?.members[`${id}`]?.displayName}
               rightIcon={
                 id === auth.uid ? (
                   <Icon name="security" />
@@ -157,7 +157,7 @@ const InviteMembersScreen = ({ navigation }) => {
                         ..._inviteList,
                         Object.assign(
                           {},
-                          { id: id, ...xGroup.members[`${id}`] }
+                          { id: id, ...xGame.members[`${id}`] }
                         ),
                       ])
                     }
@@ -174,7 +174,7 @@ const InviteMembersScreen = ({ navigation }) => {
                   onPress={() => {
                     dispatch({
                       type: SET_MEMBER_OF_GROUP,
-                      payload: { id: id, ...xGroup.members[`${id}`] },
+                      payload: { id: id, ...xGame.members[`${id}`] },
                     });
                     navigation.navigate("ManagePlayerInGameScreen");
                   }}

@@ -94,6 +94,8 @@ import ChatScreen from "./screens/ChatScreen";
 import SettingsModalScreen from "./screens/SettingsModals/SettingsModalScreen";
 import MessagesScreen from "./screens/MessageTab/MessagesScreen";
 import ChatBubble from "./components/Icons/ChatBubble";
+import GameModal from "./screens/GameModal/GameModal";
+import PIGModal from "./screens/PIGModal/PIGModal";
 const App = () => {
   YellowBox.ignoreWarnings(["Setting a timer"]);
   const _console = _.clone(console);
@@ -281,11 +283,11 @@ function WrappedApp({ navigation }) {
   const GroupAdmin = () => {
     return (
       <Drawer.Navigator
-        drawerPosition="right"
-        initialRouteName="GroupAdmin"
+        drawerPosition='right'
+        initialRouteName='GroupAdmin'
         drawerContent={(props) => <GroupAdminCustom {...props} />}
       >
-        <Drawer.Screen name="GroupAdmin" component={GroupAdminScreen} />
+        <Drawer.Screen name='GroupAdmin' component={GroupAdminScreen} />
       </Drawer.Navigator>
     );
   };
@@ -293,9 +295,9 @@ function WrappedApp({ navigation }) {
   const CreateGroupFlow = () => {
     return (
       <Stack.Navigator>
-        <Stack.Screen name="CreateGroupScreen" component={CreateGroupScreen} />
+        <Stack.Screen name='CreateGroupScreen' component={CreateGroupScreen} />
         <Stack.Screen
-          name="InviteGroupMembersScreen"
+          name='InviteGroupMembersScreen'
           component={InviteGroupMembersScreen}
         />
       </Stack.Navigator>
@@ -322,20 +324,20 @@ function WrappedApp({ navigation }) {
             options={{
               tabBarLabel: "Game Running",
               tabBarIcon: ({ color, size }) => (
-                <MaterialCommunityIcons name="cards" color={color} size={25} />
+                <MaterialCommunityIcons name='cards' color={color} size={25} />
               ),
             }}
-            name="Game Running"
+            name='Game Running'
             component={GameRunning}
           />
         ) : (
           <TopTab.Screen
-            name="Game Registering"
+            name='Game Registering'
             options={{
               tabBarLabel: `Register for ${route.params.gameName}`,
               tabBarIcon: ({ color, size }) => (
                 <MaterialCommunityIcons
-                  name="playlist-edit"
+                  name='playlist-edit'
                   color={color}
                   size={25}
                 />
@@ -347,12 +349,12 @@ function WrappedApp({ navigation }) {
 
         {route.params.gameState.includes("REGISTRATION") && (
           <TopTab.Screen
-            name="Game Info"
+            name='Game Info'
             options={{
               tabBarLabel: `Game Details`,
               tabBarIcon: ({ color, size }) => (
                 <MaterialCommunityIcons
-                  name="information"
+                  name='information'
                   color={color}
                   size={25}
                 />
@@ -363,7 +365,7 @@ function WrappedApp({ navigation }) {
         )}
 
         {route.params.hostUid === firebase.auth().currentUser.uid && (
-          <TopTab.Screen name="Live Host Screen" component={GameScreen} />
+          <TopTab.Screen name='Live Host Screen' component={GameScreen} />
         )}
       </TopTab.Navigator>
     );
@@ -387,13 +389,13 @@ function WrappedApp({ navigation }) {
       >
         {route.params.gameState.includes("RUNNING") && (
           <TopTab.Screen
-            name="GameRunning"
+            name='GameRunning'
             component={ManagePlayerInGameScreen}
             options={{
               tabBarLabel: "Manage",
               tabBarIcon: ({ color, size }) => (
                 <MaterialCommunityIcons
-                  name="poker-chip"
+                  name='poker-chip'
                   color={color}
                   size={25}
                 />
@@ -403,24 +405,24 @@ function WrappedApp({ navigation }) {
         )}
         {route.params.isPlaying && route.params.gameState.includes("RUNNING") && (
           <TopTab.Screen
-            name="Play"
+            name='Play'
             component={GameRunning}
             options={{
               tabBarLabel: "Play",
               tabBarIcon: ({ color, size }) => (
-                <MaterialCommunityIcons name="cards" color={color} size={25} />
+                <MaterialCommunityIcons name='cards' color={color} size={25} />
               ),
             }}
           />
         )}
         <TopTab.Screen
-          name="CreateGameScreen"
+          name='CreateGameScreen'
           component={CreateGameScreen}
           options={{
             tabBarLabel: "Edit",
             tabBarIcon: ({ color, size }) => (
               <MaterialCommunityIcons
-                name="calendar-edit"
+                name='calendar-edit'
                 color={color}
                 size={25}
               />
@@ -428,21 +430,21 @@ function WrappedApp({ navigation }) {
           }}
         />
         <TopTab.Screen
-          name="GameDetailScreen"
+          name='GameDetailScreen'
           options={{
             tabBarLabel: "More",
             tabBarIcon: ({ color, size }) => (
-              <MaterialIcons name="more-horiz" color={color} size={25} />
+              <MaterialIcons name='more-horiz' color={color} size={25} />
             ),
           }}
           component={GameDetailScreen}
         />
         <TopTab.Screen
-          name="InviteMembersScreen"
+          name='InviteMembersScreen'
           options={{
             tabBarLabel: "Invite",
             tabBarIcon: ({ color, size }) => (
-              <MaterialIcons name="person-add" color={color} size={25} />
+              <MaterialIcons name='person-add' color={color} size={25} />
             ),
           }}
           component={InviteMembersScreen}
@@ -454,7 +456,7 @@ function WrappedApp({ navigation }) {
   const ManageGroupFlow = () => {
     return (
       <TopTab.Navigator
-        initialRouteName="GroupsGamesScreen"
+        initialRouteName='GroupsGamesScreen'
         tabBarOptions={{
           activeTintColor: "#e91e63",
           labelStyle: { fontSize: 12 },
@@ -465,12 +467,12 @@ function WrappedApp({ navigation }) {
         <TopTab.Screen
           options={{
             tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="cards" color={color} size={25} />
+              <MaterialCommunityIcons name='cards' color={color} size={25} />
             ),
 
             tabBarLabel: "Games",
           }}
-          name="GroupsGamesScreen"
+          name='GroupsGamesScreen'
           component={GroupsGamesScreen}
         />
 
@@ -479,38 +481,38 @@ function WrappedApp({ navigation }) {
             tabBarLabel: "Group",
             tabBarIcon: ({ color, size }) => (
               <MaterialCommunityIcons
-                name="account-group"
+                name='account-group'
                 color={color}
                 size={25}
               />
             ),
           }}
-          name="GroupAdminScreen"
+          name='GroupAdminScreen'
           component={GroupAdmin}
         />
         <TopTab.Screen
           options={{
             tabBarIcon: ({ color, size }) => (
               <MaterialCommunityIcons
-                name="account-search"
+                name='account-search'
                 color={color}
                 size={25}
               />
             ),
             tabBarLabel: "Invite",
           }}
-          name="InviteGroupMembersScreen"
+          name='InviteGroupMembersScreen'
           component={InviteGroupMembersScreen}
         />
 
         <TopTab.Screen
           options={{
             tabBarIcon: ({ color, size }) => (
-              <MaterialIcons name="group-add" color={color} size={25} />
+              <MaterialIcons name='group-add' color={color} size={25} />
             ),
             tabBarLabel: "Add",
           }}
-          name="AddMemberScreen"
+          name='AddMemberScreen'
           component={AddMemberScreen}
         />
       </TopTab.Navigator>
@@ -520,7 +522,7 @@ function WrappedApp({ navigation }) {
   const ProfileTabs = () => {
     return (
       <TopTab.Navigator
-        initialRouteName="ProfileScreen"
+        initialRouteName='ProfileScreen'
         tabBarOptions={{
           activeTintColor: "#e91e63",
           labelStyle: { fontSize: 12 },
@@ -529,12 +531,12 @@ function WrappedApp({ navigation }) {
       >
         <TopTab.Screen
           options={{ tabBarLabel: "Profile" }}
-          name="ProfileScreen"
+          name='ProfileScreen'
           component={ProfileScreen}
         />
         <TopTab.Screen
           options={{ tabBarLabel: "Account" }}
-          name="SecurityScreen"
+          name='SecurityScreen'
           component={SecurityScreen}
         />
       </TopTab.Navigator>
@@ -545,7 +547,7 @@ function WrappedApp({ navigation }) {
     return (
       <Stack.Navigator>
         <Stack.Screen
-          name="AreaScreen"
+          name='AreaScreen'
           options={{
             title: "Regina",
 
@@ -573,7 +575,7 @@ function WrappedApp({ navigation }) {
     return (
       <Stack.Navigator>
         <Stack.Screen
-          name="FeedScreen"
+          name='FeedScreen'
           options={{
             // headerRight: () => <Handle />,
             title: "",
@@ -587,7 +589,7 @@ function WrappedApp({ navigation }) {
           options={{
             headerShown: false,
           }}
-          name="ChatScreen"
+          name='ChatScreen'
           component={ChatScreen}
         />
 
@@ -595,18 +597,18 @@ function WrappedApp({ navigation }) {
           options={{
             headerShown: false,
           }}
-          name="SnapScreen"
+          name='SnapScreen'
           component={SnapScreen}
         />
-        <Stack.Screen name="GameScreen" component={LiveGameFlow} />
-        <Stack.Screen name="GroupScoutScreen" component={GroupScoutScreen} />
+        <Stack.Screen name='GameScreen' component={LiveGameFlow} />
+        <Stack.Screen name='GroupScoutScreen' component={GroupScoutScreen} />
 
         <Stack.Screen
-          name="GroupPreviewScreen"
+          name='GroupPreviewScreen'
           component={GroupPreviewScreen}
         />
 
-        <Stack.Screen name="CreateGroupFlow" component={CreateGroupFlow} />
+        <Stack.Screen name='CreateGroupFlow' component={CreateGroupFlow} />
 
         {/* <Stack.Screen
           options={{
@@ -634,23 +636,23 @@ function WrappedApp({ navigation }) {
                 rounded
                 source={{ uri: route.params.groupPhotoURL }}
                 updateOn={route.params.groupPhotoURL}
-                size="small"
+                size='small'
                 onPress={() => {
                   navigation.openDrawer();
                 }}
               />
             ),
           }}
-          name="ManageGroupFlow"
+          name='ManageGroupFlow'
           component={ManageGroupFlow}
         />
 
-        <Stack.Screen name="GroupScreen" component={GroupScreen} />
+        <Stack.Screen name='GroupScreen' component={GroupScreen} />
 
-        <Stack.Screen name="AddMemberScreen" component={AddMemberScreen} />
+        <Stack.Screen name='AddMemberScreen' component={AddMemberScreen} />
 
         <Stack.Screen
-          name="CreateGameFlow"
+          name='CreateGameFlow'
           options={{
             headerTitle: () => <SelectedGameNavHeader />,
             headerBackImage: () => (
@@ -669,7 +671,7 @@ function WrappedApp({ navigation }) {
                 rounded
                 containerStyle={{ marginRight: 10 }}
                 icon={{ name: "camera-alt", size: 30, color: "red" }}
-                size="small"
+                size='small'
                 onPress={() => {
                   // dispatch({ type: SET_OVERLAY, payload: OVERLAYS.RECORD });
                   navigation.navigate("RecordContent");
@@ -680,15 +682,15 @@ function WrappedApp({ navigation }) {
           component={CreateGameFlow}
         />
         <Stack.Screen
-          name="InviteMembersScreen"
+          name='InviteMembersScreen'
           component={InviteMembersScreen}
         />
         <Stack.Screen
-          name="ManagePlayerInGameScreen"
+          name='ManagePlayerInGameScreen'
           component={ManagePlayerInGameScreen}
         />
 
-        <Stack.Screen name="GroupMemberScreen" component={GroupMemberScreen} />
+        <Stack.Screen name='GroupMemberScreen' component={GroupMemberScreen} />
       </Stack.Navigator>
     );
   };
@@ -722,16 +724,16 @@ function WrappedApp({ navigation }) {
           showLabel: false,
         }}
       >
-        <Tab.Screen name="Feed" component={FeedScreen} />
-        <Tab.Screen name="MessagesScreen" component={MessagesScreen} />
+        <Tab.Screen name='Feed' component={FeedScreen} />
+        <Tab.Screen name='MessagesScreen' component={MessagesScreen} />
         <Tab.Screen
-          name="RecordContent"
+          name='RecordContent'
           options={{
             tabBarVisible: route?.params?.photoTaken ? false : true,
           }}
           component={RecordVideo}
         />
-        <Tab.Screen name="AreaScreen" component={Area} />
+        <Tab.Screen name='AreaScreen' component={Area} />
         {/* 
         <Tab.Screen name="ProfileScreen" component={Profile} /> */}
       </Tab.Navigator>
@@ -761,7 +763,7 @@ function WrappedApp({ navigation }) {
               ]}
             >
               <Handle />
-              <Icon name="edit" />
+              <Icon name='edit' />
             </View>
           )}
           labelStyle={{}}
@@ -775,12 +777,12 @@ function WrappedApp({ navigation }) {
         />
 
         <DrawerItem
-          label="Help"
+          label='Help'
           onPress={() => Linking.openURL("https://privatehost.ca/help")}
         />
 
         <DrawerItem
-          label="Sign Out"
+          label='Sign Out'
           onPress={async () => {
             AsyncStorage.getAllKeys()
               .then((keys) => AsyncStorage.multiRemove(keys))
@@ -800,7 +802,7 @@ function WrappedApp({ navigation }) {
         <DrawerItemList {...props} />
 
         <DrawerItem
-          label="Delete Group"
+          label='Delete Group'
           onPress={() => handleDeleteGroup(navigation)}
         />
       </DrawerContentScrollView>
@@ -810,7 +812,7 @@ function WrappedApp({ navigation }) {
   const RootDrawer = () => {
     return (
       <Drawer.Navigator
-        initialRouteName="Root"
+        initialRouteName='Root'
         openByDefault={false}
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
@@ -822,10 +824,10 @@ function WrappedApp({ navigation }) {
   const Auth = () => {
     return (
       <Stack.Navigator>
-        <Stack.Screen name="RequestAccess" component={RequestCodeScreen} />
-        <Stack.Screen name="EmailPassword" component={EmailPasswordScreen} />
+        <Stack.Screen name='RequestAccess' component={RequestCodeScreen} />
+        <Stack.Screen name='EmailPassword' component={EmailPasswordScreen} />
 
-        <Stack.Screen name="EnterCode" component={EnterCodeScreen} />
+        <Stack.Screen name='EnterCode' component={EnterCodeScreen} />
       </Stack.Navigator>
     );
   };
@@ -844,19 +846,19 @@ function WrappedApp({ navigation }) {
     return (
       <Tab.Navigator>
         <Tab.Screen
-          name="Welcome"
+          name='Welcome'
           component={WelcomeScreen}
           options={{
             tabBarVisible: false,
           }}
         />
         <Tab.Screen
-          name="Auth"
+          name='Auth'
           component={Auth}
           options={{ title: "Request Access", tabBarVisible: false }}
         />
         <Tab.Screen
-          name="Main"
+          name='Main'
           component={MainApp}
           options={{ title: () => <Handle />, tabBarVisible: false }}
         />
@@ -865,15 +867,39 @@ function WrappedApp({ navigation }) {
   };
   const RootStack = createStackNavigator();
 
-  const RootWithModal = () => {
+  const RootWithModal = ({ route }) => {
+    console.log("route with modal", route?.state?.routes[1]?.params?.title);
     return (
-      <RootStack.Navigator mode="modal">
+      <RootStack.Navigator mode='modal'>
         <RootStack.Screen
-          name="Root"
+          name='Root'
           component={Root}
           options={{ headerShown: false }}
         />
-        <RootStack.Screen name="MyModal" component={SettingsModalScreen} />
+        <RootStack.Screen name='MyModal' component={SettingsModalScreen} />
+
+        <RootStack.Screen
+          screenOptions={{
+            animationEnabled: true,
+          }}
+          options={{
+            headerBackTitle: "Close",
+            headerShown: false,
+            title: "title", //route?.state?.routes[1]?.params?.title || "No Title",
+          }}
+          name='GameModal'
+          component={GameModal}
+        />
+
+        <RootStack.Screen
+          options={{
+            headerBackTitle: "Back to Game",
+
+            title: route?.state?.routes[2]?.params?.title || "No Title",
+          }}
+          name='PIGModal'
+          component={PIGModal}
+        />
       </RootStack.Navigator>
     );
   };
